@@ -136,9 +136,18 @@ void parseGamelist(SystemData* system)
 			std::string defaultName = file->metadata.get("name");
 			file->metadata = MetaDataList::createFromXML(GAME_METADATA, fileNode, relativeTo);
 
+			LOG(LogDebug) << "*** Gamelist::parseGamelist(), defaultName: \"" << defaultName << "\"";
+
 			//make sure name gets set if one didn't exist
 			if(file->metadata.get("name").empty())
+			{
+				LOG(LogDebug) << "*** Gamelist::parseGamelist(), Using defaultName";
 				file->metadata.set("name", defaultName);
+			}
+			else
+			{
+				LOG(LogDebug) << "*** Gamelist::parseGamelist(), Using name: \"" << file->metadata.get("name") << "\"";
+			}
 
 			file->metadata.resetChangedFlag();
 
@@ -147,6 +156,7 @@ void parseGamelist(SystemData* system)
 			{
 				FileFilterIndex* index = system->getIndex();
 				index->addToIndex(file);
+				LOG(LogDebug) << "*** Gamelist::parseGamelist(), Game added";
 			}
 
 		}

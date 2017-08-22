@@ -6,6 +6,7 @@
 #include "SystemData.h"
 #include "Settings.h"
 #include "FileFilterIndex.h"
+#include "Log.h"
 
 BasicGameListView::BasicGameListView(Window* window, FileData* root)
 	: ISimpleGameListView(window, root), mList(window)
@@ -47,6 +48,7 @@ void BasicGameListView::populateList(const std::vector<FileData*>& files)
 	{
 		for(auto it = files.begin(); it != files.end(); it++)
 		{
+			LOG(LogDebug) << "*** BasicGameListView::populateList(), Adding game to list: " << (*it)->getName();
 			mList.add((*it)->getName(), *it, ((*it)->getType() == FOLDER));
 		}
 	}

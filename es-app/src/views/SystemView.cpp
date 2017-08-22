@@ -30,6 +30,8 @@ void SystemView::populate()
 {
 	mEntries.clear();
 
+	LOG(LogDebug) << "*** SystemView::populate()";
+
 	for(auto it = SystemData::sSystemVector.begin(); it != SystemData::sSystemVector.end(); it++)
 	{
 		const std::shared_ptr<ThemeData>& theme = (*it)->getTheme();
@@ -40,6 +42,8 @@ void SystemView::populate()
 		Entry e;
 		e.name = (*it)->getName();
 		e.object = *it;
+
+		LOG(LogDebug) << "*** SystemView::populate(), populating \"" << e.name << "\"";
 
 		// make logo
 		if(theme->getElement("system", "logo", "image"))

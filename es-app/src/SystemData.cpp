@@ -100,6 +100,8 @@ void SystemData::populateFolder(FileData* folder)
 		}
 	}
 
+	LOG(LogDebug) << "*** SystemData::populateFolder(), system: " << this->getName();
+
 	fs::path filePath;
 	std::string extension;
 	bool isGame;
@@ -130,6 +132,7 @@ void SystemData::populateFolder(FileData* folder)
 			FileData* newGame = new FileData(GAME, filePath.generic_string(), mEnvData, this);
 			folder->addChild(newGame);
 			isGame = true;
+			LOG(LogDebug) << "*** SystemData::populateFolder(), Added game for file: " << newGame->getName();
 		}
 
 		//add directories that also do not match an extension as folders
