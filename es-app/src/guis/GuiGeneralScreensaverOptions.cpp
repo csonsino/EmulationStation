@@ -1,19 +1,11 @@
 #include "guis/GuiGeneralScreensaverOptions.h"
-#include "Window.h"
-#include "Settings.h"
-#include "PowerSaver.h"
-#include "views/ViewController.h"
 
-#include "components/ButtonComponent.h"
-#include "components/SwitchComponent.h"
-#include "components/SliderComponent.h"
-#include "components/TextComponent.h"
-//#include "components/TextEditComponent.h"
 #include "components/OptionListComponent.h"
-#include "components/MenuComponent.h"
+#include "components/SliderComponent.h"
 #include "guis/GuiMsgBox.h"
-#include "guis/GuiVideoScreensaverOptions.h"
 #include "guis/GuiSlideshowScreensaverOptions.h"
+#include "guis/GuiVideoScreensaverOptions.h"
+#include "Settings.h"
 
 GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, const char* title) : GuiScreensaverOptions(window, title)
 {
@@ -22,7 +14,7 @@ GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, const
 	screensaver_time->setValue((float)(Settings::getInstance()->getInt("ScreenSaverTime") / (1000 * 60)));
 	addWithLabel("SCREENSAVER AFTER", screensaver_time);
 	addSaveFunc([screensaver_time] {
-	    Settings::getInstance()->setInt("ScreenSaverTime", (int)round(screensaver_time->getValue()) * (1000 * 60));
+	    Settings::getInstance()->setInt("ScreenSaverTime", (int)Math::round(screensaver_time->getValue()) * (1000 * 60));
 	    PowerSaver::updateTimeouts();
 	});
 
@@ -33,7 +25,7 @@ GuiGeneralScreensaverOptions::GuiGeneralScreensaverOptions(Window* window, const
 	screensavers.push_back("black");
 	screensavers.push_back("random video");
 	screensavers.push_back("slideshow");
-	for(auto it = screensavers.begin(); it != screensavers.end(); it++)
+	for(auto it = screensavers.cbegin(); it != screensavers.cend(); it++)
 		screensaver_behavior->add(*it, *it, Settings::getInstance()->getString("ScreenSaverBehavior") == *it);
 	addWithLabel("SCREENSAVER BEHAVIOR", screensaver_behavior);
 	addSaveFunc([this, screensaver_behavior] {

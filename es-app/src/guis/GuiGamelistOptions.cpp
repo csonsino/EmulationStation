@@ -1,10 +1,15 @@
 #include "GuiGamelistOptions.h"
-#include "GuiMetaDataEd.h"
-#include "Util.h"
-#include "Settings.h"
+
+#include "guis/GuiGamelistFilter.h"
+#include "scrapers/Scraper.h"
 #include "views/gamelist/IGameListView.h"
+#include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"
+#include "FileFilterIndex.h"
+#include "FileSorts.h"
+#include "GuiMetaDataEd.h"
+#include "SystemData.h"
 
 GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system) : GuiComponent(window),
 	mSystem(system), mMenu(window, "OPTIONS"), fromPlaceholder(false), mFiltersChanged(false)
@@ -14,38 +19,52 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system) : Gui
 	// check it's not a placeholder folder - if it is, only show "Filter Options"
 	FileData* file = getGamelist()->getCursor();
 	fromPlaceholder = file->isPlaceHolder();
-	bool isFiltered = system->getIndex()->isFiltered();
 	ComponentListRow row;
 
 	if (!fromPlaceholder) {
+		// jump to letter
+		row.elements.clear();
 
-		if (!isFiltered) {
-			// jump to letter
-			row.elements.clear();
-			char curChar = toupper(getGamelist()->getCursor()->getName()[0]);
-			if(curChar < 'A' || curChar > 'Z')
-				curChar = 'A';
+		// define supported character range
+		// this range includes all numbers, capital letters, and most reasonable symbols
+		char startChar = '!';
+		char endChar = '_';
 
-			mJumpToLetterList = std::make_shared<LetterList>(mWindow, "JUMP TO LETTER", false);
-			for(char c = 'A'; c <= 'Z'; c++)
-				mJumpToLetterList->add(std::string(1, c), c, c == curChar);
+		char curChar = (char)toupper(getGamelist()->getCursor()->getSortName()[0]);
+		if(curChar < startChar || curChar > endChar)
+			curChar = startChar;
 
-			row.addElement(std::make_shared<TextComponent>(mWindow, "JUMP TO LETTER", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-			row.addElement(mJumpToLetterList, false);
-			row.input_handler = [&](InputConfig* config, Input input) {
-				if(config->isMappedTo("a", input) && input.value)
+		mJumpToLetterList = std::make_shared<LetterList>(mWindow, "JUMP TO...", false);
+		for (char c = startChar; c <= endChar; c++)
+		{
+			// check if c is a valid first letter in current list
+			const std::vector<FileData*>& files = getGamelist()->getCursor()->getParent()->getChildrenListToDisplay();
+			for (auto file : files)
+			{
+				char candidate = (char)toupper(file->getSortName()[0]);
+				if (c == candidate)
 				{
-					jumpToLetter();
-					return true;
+					mJumpToLetterList->add(std::string(1, c), c, c == curChar);
+					break;
 				}
-				else if(mJumpToLetterList->input(config, input))
-				{
-					return true;
-				}
-				return false;
-			};
-			mMenu.addRow(row);
+			}
 		}
+
+		row.addElement(std::make_shared<TextComponent>(mWindow, "JUMP TO...", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+		row.addElement(mJumpToLetterList, false);
+		row.input_handler = [&](InputConfig* config, Input input) {
+			if(config->isMappedTo("a", input) && input.value)
+			{
+				jumpToLetter();
+				return true;
+			}
+			else if(mJumpToLetterList->input(config, input))
+			{
+				return true;
+			}
+			return false;
+		};
+		mMenu.addRow(row);
 
 		// sort list by
 		mListSort = std::make_shared<SortList>(mWindow, "SORT GAMES BY", false);
@@ -66,8 +85,8 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system) : Gui
 
 	std::map<std::string, CollectionSystemData> customCollections = CollectionSystemManager::get()->getCustomCollectionSystems();
 
-	if(ViewController::get()->isUIModeFull() &&
-		((customCollections.find(system->getName()) != customCollections.end() && CollectionSystemManager::get()->getEditingCollection() != system->getName()) ||
+	if(UIModeController::getInstance()->isUIModeFull() &&
+		((customCollections.find(system->getName()) != customCollections.cend() && CollectionSystemManager::get()->getEditingCollection() != system->getName()) ||
 		CollectionSystemManager::get()->getCustomCollectionsBundle()->getName() == system->getName()))
 	{
 		row.elements.clear();
@@ -76,15 +95,15 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system) : Gui
 		mMenu.addRow(row);
 	}
 
-	if(ViewController::get()->isUIModeFull() && CollectionSystemManager::get()->isEditing())
+	if(UIModeController::getInstance()->isUIModeFull() && CollectionSystemManager::get()->isEditing())
 	{
 		row.elements.clear();
-		row.addElement(std::make_shared<TextComponent>(mWindow, "FINISH EDITING '" + strToUpper(CollectionSystemManager::get()->getEditingCollection()) + "' COLLECTION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+		row.addElement(std::make_shared<TextComponent>(mWindow, "FINISH EDITING '" + Utils::String::toUpper(CollectionSystemManager::get()->getEditingCollection()) + "' COLLECTION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
 		row.makeAcceptInputHandler(std::bind(&GuiGamelistOptions::exitEditMode, this));
 		mMenu.addRow(row);
 	}
 
-	if (ViewController::get()->isUIModeFull() && !fromPlaceholder && !(mSystem->isCollection() && file->getType() == FOLDER))
+	if (UIModeController::getInstance()->isUIModeFull() && !fromPlaceholder && !(mSystem->isCollection() && file->getType() == FOLDER))
 	{
 		row.elements.clear();
 		row.addElement(std::make_shared<TextComponent>(mWindow, "EDIT THIS GAME'S METADATA", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
@@ -175,7 +194,7 @@ void GuiGamelistOptions::openMetaDataEd()
 		};
 	}
 
-	mWindow->pushGui(new GuiMetaDataEd(mWindow, &file->metadata, file->metadata.getMDD(), p, file->getPath().filename().string(),
+	mWindow->pushGui(new GuiMetaDataEd(mWindow, &file->metadata, file->metadata.getMDD(), p, Utils::FileSystem::getFileName(file->getPath()),
 		std::bind(&IGameListView::onFileChanged, ViewController::get()->getGameListView(file->getSystem()).get(), file, FILE_METADATA_CHANGED), deleteBtnFunc));
 }
 
@@ -185,10 +204,10 @@ void GuiGamelistOptions::jumpToLetter()
 	IGameListView* gamelist = getGamelist();
 
 	// this is a really shitty way to get a list of files
-	const std::vector<FileData*>& files = gamelist->getCursor()->getParent()->getChildren();
+	const std::vector<FileData*>& files = gamelist->getCursor()->getParent()->getChildrenListToDisplay();
 
 	long min = 0;
-	long max = files.size() - 1;
+	long max = (long)files.size() - 1;
 	long mid = 0;
 
 	while(max >= min)
@@ -199,11 +218,11 @@ void GuiGamelistOptions::jumpToLetter()
 		if(files.at(mid)->getName().empty())
 			continue;
 
-		char checkLetter = toupper(files.at(mid)->getName()[0]);
+		char checkLetter = (char)toupper(files.at(mid)->getSortName()[0]);
 
 		if(checkLetter < letter)
 			min = mid + 1;
-		else if(checkLetter > letter || (mid > 0 && (letter == toupper(files.at(mid - 1)->getName()[0]))))
+		else if(checkLetter > letter || (mid > 0 && (letter == toupper(files.at(mid - 1)->getSortName()[0]))))
 			max = mid - 1;
 		else
 			break; //exact match found

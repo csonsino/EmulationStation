@@ -1,14 +1,22 @@
 #pragma once
+#ifndef ES_CORE_WINDOW_H
+#define ES_CORE_WInDOW_H
 
-#include "GuiComponent.h"
-#include "InputManager.h"
+#include "HelpPrompt.h"
+#include "InputConfig.h"
 #include "Settings.h"
-#include <vector>
-#include "resources/Font.h"
+
+#include <memory>
 
 class FileData;
+class Font;
+class GuiComponent;
 class HelpComponent;
 class ImageComponent;
+class InputConfig;
+class TextCache;
+class Transform4x4f;
+struct HelpStyle;
 
 class Window
 {
@@ -28,23 +36,9 @@ public:
 
 	class InfoPopup {
 	public:
-		virtual void render(const Eigen::Affine3f& parentTrans) = 0;
+		virtual void render(const Transform4x4f& parentTrans) = 0;
 		virtual void stop() = 0;
 		virtual ~InfoPopup() {};
-	};
-
-	class PassKeyListener {
-	public:
-		bool isUIModeChanged(InputConfig* config, Input input, Window* window);
-		PassKeyListener()
-		{
-			mPassKeySequence = Settings::getInstance()->getString("UIMode_passkey");
-			mPassKeyCounter = 0;
-		}
-	private:
-		std::string mPassKeySequence;
-		int mPassKeyCounter;
-		const std::vector<std::string> mInputVals = { "up", "down", "left", "right", "a", "b", "x", "y" };
 	};
 
 	Window();
@@ -53,14 +47,14 @@ public:
 	void pushGui(GuiComponent* gui);
 	void removeGui(GuiComponent* gui);
 	GuiComponent* peekGui();
-	inline int getGuiStackSize() { return mGuiStack.size(); }
+	inline int getGuiStackSize() { return (int)mGuiStack.size(); }
 
 	void textInput(const char* text);
 	void input(InputConfig* config, Input input);
 	void update(int deltaTime);
 	void render();
 
-	bool init(unsigned int width = 0, unsigned int height = 0);
+	bool init();
 	void deinit();
 
 	void normalizeNextUpdate();
@@ -94,7 +88,6 @@ private:
 	ScreenSaver*	mScreenSaver;
 	InfoPopup*		mInfoPopup;
 	bool			mRenderScreenSaver;
-	PassKeyListener* mPassKeyListener;
 
 	std::vector<GuiComponent*> mGuiStack;
 
@@ -114,3 +107,5 @@ private:
 
 	bool mRenderedHelpPrompts;
 };
+
+#endif // ES_CORE_WINDOW_H

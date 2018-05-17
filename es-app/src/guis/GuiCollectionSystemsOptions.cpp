@@ -1,13 +1,13 @@
 #include "guis/GuiCollectionSystemsOptions.h"
-#include "guis/GuiMsgBox.h"
-#include "guis/GuiTextEditPopup.h"
-#include "Settings.h"
-#include "views/ViewController.h"
 
-#include "guis/GuiSettings.h"
-#include "Util.h"
-#include "components/TextComponent.h"
 #include "components/OptionListComponent.h"
+#include "components/SwitchComponent.h"
+#include "guis/GuiSettings.h"
+#include "guis/GuiTextEditPopup.h"
+#include "utils/StringUtil.h"
+#include "views/ViewController.h"
+#include "CollectionSystemManager.h"
+#include "Window.h"
 
 GuiCollectionSystemsOptions::GuiCollectionSystemsOptions(Window* window) : GuiComponent(window), mMenu(window, "GAME COLLECTION SETTINGS")
 {
@@ -33,7 +33,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 			std::shared_ptr< OptionListComponent<std::string> > folderThemes = std::make_shared< OptionListComponent<std::string> >(mWindow, "SELECT THEME FOLDER", true);
 
 			// add Custom Systems
-			for(auto it = unusedFolders.begin() ; it != unusedFolders.end() ; it++ )
+			for(auto it = unusedFolders.cbegin() ; it != unusedFolders.cend() ; it++ )
 			{
 				ComponentListRow row;
 				std::string name = *it;
@@ -43,7 +43,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 				};
 				row.makeAcceptInputHandler(createCollectionCall);
 
-				auto themeFolder = std::make_shared<TextComponent>(mWindow, strToUpper(name), Font::get(FONT_SIZE_SMALL), 0x777777FF);
+				auto themeFolder = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(name), Font::get(FONT_SIZE_SMALL), 0x777777FF);
 				row.addElement(themeFolder, true);
 				s->addRow(row);
 			}
@@ -78,7 +78,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	if(CollectionSystemManager::get()->isEditing())
 	{
 		row.elements.clear();
-		row.addElement(std::make_shared<TextComponent>(mWindow, "FINISH EDITING '" + strToUpper(CollectionSystemManager::get()->getEditingCollection()) + "' COLLECTION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+		row.addElement(std::make_shared<TextComponent>(mWindow, "FINISH EDITING '" + Utils::String::toUpper(CollectionSystemManager::get()->getEditingCollection()) + "' COLLECTION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
 		row.makeAcceptInputHandler(std::bind(&GuiCollectionSystemsOptions::exitEditMode, this));
 		mMenu.addRow(row);
 	}
@@ -111,8 +111,8 @@ void GuiCollectionSystemsOptions::createCollection(std::string inName) {
 	std::string name = CollectionSystemManager::get()->getValidNewCollectionName(inName);
 	SystemData* newSys = CollectionSystemManager::get()->addNewCustomCollection(name);
 	customOptionList->add(name, name, true);
-	std::string outAuto = vectorToCommaString(autoOptionList->getSelectedObjects());
-	std::string outCustom = vectorToCommaString(customOptionList->getSelectedObjects());
+	std::string outAuto = Utils::String::vectorToCommaString(autoOptionList->getSelectedObjects());
+	std::string outCustom = Utils::String::vectorToCommaString(customOptionList->getSelectedObjects());
 	updateSettings(outAuto, outCustom);
 	ViewController::get()->goToSystemView(newSys);
 
@@ -142,7 +142,7 @@ void GuiCollectionSystemsOptions::addSystemsToMenu()
 	autoOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, "SELECT COLLECTIONS", true);
 
 	// add Auto Systems
-	for(std::map<std::string, CollectionSystemData>::iterator it = autoSystems.begin() ; it != autoSystems.end() ; it++ )
+	for(std::map<std::string, CollectionSystemData>::const_iterator it = autoSystems.cbegin() ; it != autoSystems.cend() ; it++ )
 	{
 		autoOptionList->add(it->second.decl.longName, it->second.decl.name, it->second.isEnabled);
 	}
@@ -153,7 +153,7 @@ void GuiCollectionSystemsOptions::addSystemsToMenu()
 	customOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, "SELECT COLLECTIONS", true);
 
 	// add Custom Systems
-	for(std::map<std::string, CollectionSystemData>::iterator it = customSystems.begin() ; it != customSystems.end() ; it++ )
+	for(std::map<std::string, CollectionSystemData>::const_iterator it = customSystems.cbegin() ; it != customSystems.cend() ; it++ )
 	{
 		customOptionList->add(it->second.decl.longName, it->second.decl.name, it->second.isEnabled);
 	}
@@ -162,9 +162,9 @@ void GuiCollectionSystemsOptions::addSystemsToMenu()
 
 void GuiCollectionSystemsOptions::applySettings()
 {
-	std::string outAuto = vectorToCommaString(autoOptionList->getSelectedObjects());
+	std::string outAuto = Utils::String::vectorToCommaString(autoOptionList->getSelectedObjects());
 	std::string prevAuto = Settings::getInstance()->getString("CollectionSystemsAuto");
-	std::string outCustom = vectorToCommaString(customOptionList->getSelectedObjects());
+	std::string outCustom = Utils::String::vectorToCommaString(customOptionList->getSelectedObjects());
 	std::string prevCustom = Settings::getInstance()->getString("CollectionSystemsCustom");
 	bool outSort = sortAllSystemsSwitch->getState();
 	bool prevSort = Settings::getInstance()->getBool("SortAllSystems");

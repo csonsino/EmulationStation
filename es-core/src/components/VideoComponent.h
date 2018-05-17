@@ -1,16 +1,12 @@
-#ifndef _VIDEOCOMPONENT_H_
-#define _VIDEOCOMPONENT_H_
+#pragma once
+#ifndef ES_CORE_COMPONENTS_VIDEO_COMPONENT_H
+#define ES_CORE_COMPONENTS_VIDEO_COMPONENT_H
 
-#include "platform.h"
-#include GLHEADER
-
+#include "components/ImageComponent.h"
 #include "GuiComponent.h"
-#include "ImageComponent.h"
 #include <string>
-#include <memory>
-#include <SDL.h>
-#include <SDL_mutex.h>
-#include <boost/filesystem.hpp>
+
+class TextureResource;
 
 std::string	getTitlePath();
 std::string	getTitleFolder();
@@ -52,8 +48,8 @@ public:
 	void onSizeChanged() override;
 	void setOpacity(unsigned char opacity) override;
 
-	void render(const Eigen::Affine3f& parentTrans) override;
-	void renderSnapshot(const Eigen::Affine3f& parentTrans);
+	void render(const Transform4x4f& parentTrans) override;
+	void renderSnapshot(const Transform4x4f& parentTrans);
 
 	virtual void applyTheme(const std::shared_ptr<ThemeData>& theme, const std::string& view, const std::string& element, unsigned int properties) override;
 
@@ -66,13 +62,13 @@ public:
 	// Can be set before or after a video is loaded.
 	// setMaxSize() and setResize() are mutually exclusive.
 	virtual void setResize(float width, float height) = 0;
-	inline void setResize(const Eigen::Vector2f& size) { setResize(size.x(), size.y()); }
+	inline void setResize(const Vector2f& size) { setResize(size.x(), size.y()); }
 
 	// Resize the video to be as large as possible but fit within a box of this size.
 	// Can be set before or after a video is loaded.
 	// Never breaks the aspect ratio. setMaxSize() and setResize() are mutually exclusive.
 	virtual void setMaxSize(float width, float height) = 0;
-	inline void setMaxSize(const Eigen::Vector2f& size) { setMaxSize(size.x(), size.y()); }
+	inline void setMaxSize(const Vector2f& size) { setMaxSize(size.x(), size.y()); }
 
 private:
 	// Start the video Immediately
@@ -94,14 +90,14 @@ private:
 protected:
 	unsigned						mVideoWidth;
 	unsigned						mVideoHeight;
-	Eigen::Vector2f					mTargetSize;
+	Vector2f						mTargetSize;
 	std::shared_ptr<TextureResource> mTexture;
 	float							mFadeIn;
 	std::string						mStaticImagePath;
 	ImageComponent					mStaticImage;
 
-	boost::filesystem::path			mVideoPath;
-	boost::filesystem::path			mPlayingVideoPath;
+	std::string						mVideoPath;
+	std::string						mPlayingVideoPath;
 	bool							mStartDelayed;
 	unsigned						mStartTime;
 	bool							mIsPlaying;
@@ -114,4 +110,4 @@ protected:
 	Configuration					mConfig;
 };
 
-#endif
+#endif // ES_CORE_COMPONENTS_VIDEO_COMPONENT_H

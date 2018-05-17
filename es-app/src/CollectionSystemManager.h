@@ -1,15 +1,15 @@
 #pragma once
+#ifndef ES_APP_COLLECTION_SYSTEM_MANAGER_H
+#define ES_APP_COLLECTION_SYSTEM_MANAGER_H
 
-#include <vector>
+#include <map>
 #include <string>
-#include "FileData.h"
-#include "Window.h"
-#include "MetaData.h"
-#include "PlatformId.h"
-#include "ThemeData.h"
-#include "FileFilterIndex.h"
-#include "SystemData.h"
-#include "views/ViewController.h"
+#include <vector>
+
+class FileData;
+class SystemData;
+class Window;
+struct SystemEnvironmentData;
 
 enum CollectionSystemType
 {
@@ -103,6 +103,8 @@ private:
 	std::vector<std::string> getCollectionThemeFolders(bool custom);
 	std::vector<std::string> getUserCollectionThemeFolders();
 
+	void trimCollectionCount(FileData* rootFolder, int limit);
+
 	bool themeFolderExists(std::string folder);
 
 	bool includeFileInAutoCollections(FileData* file);
@@ -113,3 +115,5 @@ private:
 std::string getCustomCollectionConfigPath(std::string collectionName);
 std::string getCollectionsFolder();
 bool systemSort(SystemData* sys1, SystemData* sys2);
+
+#endif // ES_APP_COLLECTION_SYSTEM_MANAGER_H

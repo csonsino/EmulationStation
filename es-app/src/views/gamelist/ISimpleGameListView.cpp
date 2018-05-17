@@ -1,11 +1,11 @@
 #include "views/gamelist/ISimpleGameListView.h"
-#include "ThemeData.h"
-#include "Window.h"
+
+#include "views/UIModeController.h"
 #include "views/ViewController.h"
-#include "Sound.h"
-#include "Log.h"
-#include "Settings.h"
 #include "CollectionSystemManager.h"
+#include "Settings.h"
+#include "Sound.h"
+#include "SystemData.h"
 
 ISimpleGameListView::ISimpleGameListView(Window* window, FileData* root) : IGameListView(window, root),
 	mHeaderText(window), mHeaderImage(window), mBackground(window)
@@ -60,7 +60,7 @@ void ISimpleGameListView::onThemeChanged(const std::shared_ptr<ThemeData>& theme
 	}
 }
 
-void ISimpleGameListView::onFileChanged(FileData* file, FileChangeType change)
+void ISimpleGameListView::onFileChanged(FileData* /*file*/, FileChangeType /*change*/)
 {
 	// we could be tricky here to be efficient;
 	// but this shouldn't happen very often so we'll just always repopulate
@@ -118,7 +118,7 @@ bool ISimpleGameListView::input(InputConfig* config, Input input)
 			}
 
 			return true;
-		}else if(config->isMappedTo("right", input))
+		}else if(config->isMappedTo(getQuickSystemSelectRightButton(), input))
 		{
 			if(Settings::getInstance()->getBool("QuickSystemSelect"))
 			{
@@ -126,7 +126,7 @@ bool ISimpleGameListView::input(InputConfig* config, Input input)
 				ViewController::get()->goToNextGameList();
 				return true;
 			}
-		}else if(config->isMappedTo("left", input))
+		}else if(config->isMappedTo(getQuickSystemSelectLeftButton(), input))
 		{
 			if(Settings::getInstance()->getBool("QuickSystemSelect"))
 			{
@@ -136,14 +136,17 @@ bool ISimpleGameListView::input(InputConfig* config, Input input)
 			}
 		}else if (config->isMappedTo("x", input))
 		{
-			// go to random system game
-			FileData* randomGame = getCursor()->getSystem()->getRandomGame();
-			if (randomGame)
+			if (mRoot->getSystem()->isGameSystem())
 			{
-				setCursor(randomGame);
+				// go to random system game
+				FileData* randomGame = getCursor()->getSystem()->getRandomGame();
+				if (randomGame)
+				{
+					setCursor(randomGame);
+				}
+				return true;
 			}
-			return true;
-		}else if (config->isMappedTo("y", input))
+		}else if (config->isMappedTo("y", input) && !(UIModeController::getInstance()->isUIModeKid()))
 		{
 			if(mRoot->getSystem()->isGameSystem())
 			{

@@ -1,20 +1,20 @@
 #include "Window.h"
-#include <iostream>
-#include "Renderer.h"
-#include "AudioManager.h"
-#include "Log.h"
-#include "Settings.h"
-#include <algorithm>
-#include <iomanip>
+
 #include "components/HelpComponent.h"
 #include "components/ImageComponent.h"
+#include "resources/Font.h"
+#include "resources/TextureResource.h"
+#include "InputManager.h"
+#include "Log.h"
+#include "Renderer.h"
+#include <algorithm>
+#include <iomanip>
 
 Window::Window() : mNormalizeNextUpdate(false), mFrameTimeElapsed(0), mFrameCountElapsed(0), mAverageDeltaTime(10),
 	mAllowSleep(true), mSleeping(false), mTimeSinceLastInput(0), mScreenSaver(NULL), mRenderScreenSaver(false), mInfoPopup(NULL)
 {
 	mHelp = new HelpComponent(this);
 	mBackgroundOverlay = new ImageComponent(this);
-	mPassKeyListener = new PassKeyListener;
 }
 
 Window::~Window()
@@ -41,13 +41,13 @@ void Window::pushGui(GuiComponent* gui)
 
 void Window::removeGui(GuiComponent* gui)
 {
-	for(auto i = mGuiStack.begin(); i != mGuiStack.end(); i++)
+	for(auto i = mGuiStack.cbegin(); i != mGuiStack.cend(); i++)
 	{
 		if(*i == gui)
 		{
 			i = mGuiStack.erase(i);
 
-			if(i == mGuiStack.end() && mGuiStack.size()) // we just popped the stack and the stack is not empty
+			if(i == mGuiStack.cend() && mGuiStack.size()) // we just popped the stack and the stack is not empty
 			{
 				mGuiStack.back()->updateHelpPrompts();
 				mGuiStack.back()->topWindow(true);
@@ -66,9 +66,9 @@ GuiComponent* Window::peekGui()
 	return mGuiStack.back();
 }
 
-bool Window::init(unsigned int width, unsigned int height)
+bool Window::init()
 {
-	if(!Renderer::init(width, height))
+	if(!Renderer::init())
 	{
 		LOG(LogError) << "Renderer failed to initialize!";
 		return false;
@@ -99,7 +99,7 @@ bool Window::init(unsigned int width, unsigned int height)
 void Window::deinit()
 {
 	// Hide all GUI elements on uninitialisation - this disable
-	for(auto i = mGuiStack.begin(); i != mGuiStack.end(); i++)
+	for(auto i = mGuiStack.cbegin(); i != mGuiStack.cend(); i++)
 	{
 		(*i)->onHide();
 	}
@@ -169,10 +169,14 @@ void Window::input(InputConfig* config, Input input)
 		// toggle TextComponent debug view with Ctrl-T
 		Settings::getInstance()->setBool("DebugText", !Settings::getInstance()->getBool("DebugText"));
 	}
+	else if(config->getDeviceId() == DEVICE_KEYBOARD && input.value && input.id == SDLK_i && SDL_GetModState() & KMOD_LCTRL && Settings::getInstance()->getBool("Debug"))
+	{
+		// toggle TextComponent debug view with Ctrl-I
+		Settings::getInstance()->setBool("DebugImage", !Settings::getInstance()->getBool("DebugImage"));
+	}
 	else
 	{
-		if (!mPassKeyListener->isUIModeChanged(config, input, this) && // check if UI mode has changed due to passphrase completion
-			peekGui())
+		if (peekGui())
 		{
 			this->peekGui()->input(config, input); // this is where the majority of inputs will be consumed: the GuiComponent Stack
 		}
@@ -228,7 +232,7 @@ void Window::update(int deltaTime)
 
 void Window::render()
 {
-	Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+	Transform4x4f transform = Transform4x4f::Identity();
 
 	mRenderedHelpPrompts = false;
 
@@ -251,7 +255,7 @@ void Window::render()
 
 	if(Settings::getInstance()->getBool("DrawFramerate") && mFrameDataText)
 	{
-		Renderer::setMatrix(Eigen::Affine3f::Identity());
+		Renderer::setMatrix(Transform4x4f::Identity());
 		mDefaultFonts.at(1)->renderTextCache(mFrameDataText.get());
 	}
 
@@ -296,7 +300,7 @@ void Window::setAllowSleep(bool sleep)
 
 void Window::renderLoadingScreen()
 {
-	Eigen::Affine3f trans = Eigen::Affine3f::Identity();
+	Transform4x4f trans = Transform4x4f::Identity();
 	Renderer::setMatrix(trans);
 	Renderer::drawRect(0, 0, Renderer::getScreenWidth(), Renderer::getScreenHeight(), 0x000000FF);
 
@@ -308,8 +312,8 @@ void Window::renderLoadingScreen()
 
 	auto& font = mDefaultFonts.at(1);
 	TextCache* cache = font->buildTextCache("LOADING...", 0, 0, 0x656565FF);
-	trans = trans.translate(Eigen::Vector3f(round((Renderer::getScreenWidth() - cache->metrics.size.x()) / 2.0f),
-		round(Renderer::getScreenHeight() * 0.835f), 0.0f));
+	trans = trans.translate(Vector3f(Math::round((Renderer::getScreenWidth() - cache->metrics.size.x()) / 2.0f),
+		Math::round(Renderer::getScreenHeight() * 0.835f), 0.0f));
 	Renderer::setMatrix(trans);
 	font->renderTextCache(cache);
 	delete cache;
@@ -319,7 +323,7 @@ void Window::renderLoadingScreen()
 
 void Window::renderHelpPromptsEarly()
 {
-	mHelp->render(Eigen::Affine3f::Identity());
+	mHelp->render(Transform4x4f::Identity());
 	mRenderedHelpPrompts = true;
 }
 
@@ -332,14 +336,14 @@ void Window::setHelpPrompts(const std::vector<HelpPrompt>& prompts, const HelpSt
 
 	std::map<std::string, bool> inputSeenMap;
 	std::map<std::string, int> mappedToSeenMap;
-	for(auto it = prompts.begin(); it != prompts.end(); it++)
+	for(auto it = prompts.cbegin(); it != prompts.cend(); it++)
 	{
 		// only add it if the same icon hasn't already been added
 		if(inputSeenMap.emplace(it->first, true).second)
 		{
 			// this symbol hasn't been seen yet, what about the action name?
 			auto mappedTo = mappedToSeenMap.find(it->second);
-			if(mappedTo != mappedToSeenMap.end())
+			if(mappedTo != mappedToSeenMap.cend())
 			{
 				// yes, it has!
 
@@ -356,7 +360,7 @@ void Window::setHelpPrompts(const std::vector<HelpPrompt>& prompts, const HelpSt
 				}
 			}else{
 				// no, it hasn't!
-				mappedToSeenMap.emplace(it->second, addPrompts.size());
+				mappedToSeenMap.emplace(it->second, (int)addPrompts.size());
 				addPrompts.push_back(*it);
 			}
 		}
@@ -404,7 +408,7 @@ void Window::onWake()
 
 bool Window::isProcessing()
 {
-	return count_if(mGuiStack.begin(), mGuiStack.end(), [](GuiComponent* c) { return c->isProcessing(); }) > 0;
+	return count_if(mGuiStack.cbegin(), mGuiStack.cend(), [](GuiComponent* c) { return c->isProcessing(); }) > 0;
 }
 
 void Window::startScreenSaver()
@@ -412,7 +416,7 @@ void Window::startScreenSaver()
  	if (mScreenSaver && !mRenderScreenSaver)
  	{
  		// Tell the GUI components the screensaver is starting
- 		for(auto i = mGuiStack.begin(); i != mGuiStack.end(); i++)
+ 		for(auto i = mGuiStack.cbegin(); i != mGuiStack.cend(); i++)
  			(*i)->onScreenSaverActivate();
 
  		mScreenSaver->startScreenSaver();
@@ -428,7 +432,7 @@ void Window::startScreenSaver()
  		mRenderScreenSaver = false;
 
  		// Tell the GUI components the screensaver has stopped
- 		for(auto i = mGuiStack.begin(); i != mGuiStack.end(); i++)
+ 		for(auto i = mGuiStack.cbegin(); i != mGuiStack.cend(); i++)
  			(*i)->onScreenSaverDeactivate();
  	}
  }
@@ -438,44 +442,3 @@ void Window::startScreenSaver()
  	if (mScreenSaver)
  		mScreenSaver->renderScreenSaver();
  }
-
-bool Window::PassKeyListener::isUIModeChanged(InputConfig * config, Input input, Window* window)
-{
-	// This function reads the current input to listen for the passkey
-	// sequence to unlock the UI mode. The progress is saved in mPassKeyCounter
-	// supported sequence-inputs: u (up), d (down), l (left), r (right), a, b, x, y
-	// default passkeyseq = "uuddlrlrba", as defined in the setting 'UIMode_passkey'.
-	
-	if ((Settings::getInstance()->getString("UIMode") == "Full") || (!input.value))
-	{
-		return false; // Already unlocked, or no keydown, nothing to do here.
-	}
-
-	bool foundMatch = false;
-
-	for (auto valstring : mInputVals)
-	{
-		if (config->isMappedTo(valstring, input) &&
-			(this->mPassKeySequence[this->mPassKeyCounter] == valstring[0]))
-		{
-			this->mPassKeyCounter ++;
-			foundMatch = true;
-		}
-	}
-
-	if (!foundMatch)
-	{
-		this->mPassKeyCounter = 0; // current input is incorrect, reset counter
-	}
-
-	if (this->mPassKeyCounter == (this->mPassKeySequence.length()))
-	{
-		// When we have reached the end of the list, trigger UI_mode unlock
-		LOG(LogDebug) << " Window::PassKeyListener::isUIModeChanged(): Passkey sequence completed, switching UIMode to full";
-		Settings::getInstance()->setString("UIMode", "Full");
-		Settings::getInstance()->saveFile();
-		this->mPassKeyCounter = 0;
-		return true;
-	}
-	return false;
-}
