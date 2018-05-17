@@ -1,15 +1,15 @@
 #pragma once
-#ifndef ES_CORE_RESOURCES_TEXTURE_DATA_MANAGER_H
-#define ES_CORE_RESOURCES_TEXTURE_DATA_MANAGER_H
 
-#include <condition_variable>
-#include <list>
+#include "resources/ResourceManager.h"
+#include "platform.h"
+#include "resources/TextureData.h"
 #include <map>
 #include <memory>
-#include <mutex>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
 
-class TextureData;
 class TextureResource;
 
 class TextureLoader
@@ -28,7 +28,7 @@ private:
 	void threadProc();
 
 	std::list<std::shared_ptr<TextureData> > 										mTextureDataQ;
-	std::map<TextureData*, std::list<std::shared_ptr<TextureData> >::const_iterator > 	mTextureDataLookup;
+	std::map<TextureData*, std::list<std::shared_ptr<TextureData> >::iterator > 	mTextureDataLookup;
 
 	std::thread*				mThread;
 	std::mutex					mMutex;
@@ -79,9 +79,8 @@ public:
 private:
 
 	std::list<std::shared_ptr<TextureData> >												mTextures;
-	std::map<const TextureResource*, std::list<std::shared_ptr<TextureData> >::const_iterator > 	mTextureLookup;
+	std::map<const TextureResource*, std::list<std::shared_ptr<TextureData> >::iterator > 	mTextureLookup;
 	std::shared_ptr<TextureData>															mBlank;
 	TextureLoader*																			mLoader;
 };
 
-#endif // ES_CORE_RESOURCES_TEXTURE_DATA_MANAGER_H

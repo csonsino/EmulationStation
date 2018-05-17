@@ -1,14 +1,10 @@
-#pragma once
-#ifndef ES_APP_GUIS_GUI_GAME_LIST_OPTIONS_H
-#define ES_APP_GUIS_GUI_GAME_LIST_OPTIONS_H
-
+#include "GuiComponent.h"
 #include "components/MenuComponent.h"
 #include "components/OptionListComponent.h"
-#include "FileData.h"
-#include "GuiComponent.h"
+#include "GuiGamelistFilter.h"
+#include "FileSorts.h"
 
 class IGameListView;
-class SystemData;
 
 class GuiGamelistOptions : public GuiComponent
 {
@@ -40,5 +36,3 @@ private:
 	bool fromPlaceholder;
 	bool mFiltersChanged;
 };
-
-#endif // ES_APP_GUIS_GUI_GAME_LIST_OPTIONS_H

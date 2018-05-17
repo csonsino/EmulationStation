@@ -1,28 +1,23 @@
 #include "components/ImageComponent.h"
-
-#include "resources/TextureResource.h"
+#include <iostream>
+#include <boost/filesystem.hpp>
+#include <math.h>
 #include "Log.h"
 #include "Renderer.h"
-#include "Settings.h"
 #include "ThemeData.h"
+#include "Util.h"
 
-Vector2i ImageComponent::getTextureSize() const
+Eigen::Vector2i ImageComponent::getTextureSize() const
 {
 	if(mTexture)
 		return mTexture->getSize();
 	else
-		return Vector2i::Zero();
-}
-
-Vector2f ImageComponent::getSize() const
-{
-	return GuiComponent::getSize() * (mBottomRightCrop - mTopLeftCrop);
+		return Eigen::Vector2i::Zero();
 }
 
 ImageComponent::ImageComponent(Window* window, bool forceLoad, bool dynamic) : GuiComponent(window),
-	mTargetIsMax(false), mTargetIsMin(false), mFlipX(false), mFlipY(false), mTargetSize(0, 0), mColorShift(0xFFFFFFFF),
-	mForceLoad(forceLoad), mDynamic(dynamic), mFadeOpacity(0), mFading(false), mRotateByTargetSize(false),
-	mTopLeftCrop(0.0f, 0.0f), mBottomRightCrop(1.0f, 1.0f)
+	mTargetIsMax(false), mFlipX(false), mFlipY(false), mTargetSize(0, 0), mColorShift(0xFFFFFFFF),
+	mForceLoad(forceLoad), mDynamic(dynamic), mFadeOpacity(0.0f), mFading(false)
 {
 	updateColors();
 }
@@ -36,8 +31,8 @@ void ImageComponent::resize()
 	if(!mTexture)
 		return;
 
-	const Vector2f textureSize = mTexture->getSourceImageSize();
-	if(textureSize == Vector2f::Zero())
+	const Eigen::Vector2f textureSize = mTexture->getSourceImageSize();
+	if(textureSize.isZero())
 		return;
 
 	if(mTexture->isTiled())
@@ -54,7 +49,7 @@ void ImageComponent::resize()
 		{
 			mSize = textureSize;
 
-			Vector2f resizeScale((mTargetSize.x() / mSize.x()), (mTargetSize.y() / mSize.y()));
+			Eigen::Vector2f resizeScale((mTargetSize.x() / mSize.x()), (mTargetSize.y() / mSize.y()));
 			
 			if(resizeScale.x() < resizeScale.y())
 			{
@@ -66,54 +61,29 @@ void ImageComponent::resize()
 			}
 
 			// for SVG rasterization, always calculate width from rounded height (see comment above)
-			mSize[1] = Math::round(mSize[1]);
-			mSize[0] = (mSize[1] / textureSize.y()) * textureSize.x();
-
-		}else if(mTargetIsMin)
-		{
-			mSize = textureSize;
-
-			Vector2f resizeScale((mTargetSize.x() / mSize.x()), (mTargetSize.y() / mSize.y()));
-
-			if(resizeScale.x() > resizeScale.y())
-			{
-				mSize[0] *= resizeScale.x();
-				mSize[1] *= resizeScale.x();
-
-				float cropPercent = (mSize.y() - mTargetSize.y()) / (mSize.y() * 2);
-				crop(0, cropPercent, 0, cropPercent);
-			}else{
-				mSize[0] *= resizeScale.y();
-				mSize[1] *= resizeScale.y();
-
-				float cropPercent = (mSize.x() - mTargetSize.x()) / (mSize.x() * 2);
-				crop(cropPercent, 0, cropPercent, 0);
-			}
-
-			// for SVG rasterization, always calculate width from rounded height (see comment above)
-			mSize[1] = Math::round(mSize[1]);
+			mSize[1] = round(mSize[1]);
 			mSize[0] = (mSize[1] / textureSize.y()) * textureSize.x();
 
 		}else{
 			// if both components are set, we just stretch
 			// if no components are set, we don't resize at all
-			mSize = mTargetSize == Vector2f::Zero() ? textureSize : mTargetSize;
+			mSize = mTargetSize.isZero() ? textureSize : mTargetSize;
 
 			// if only one component is set, we resize in a way that maintains aspect ratio
 			// for SVG rasterization, we always calculate width from rounded height (see comment above)
 			if(!mTargetSize.x() && mTargetSize.y())
 			{
-				mSize[1] = Math::round(mTargetSize.y());
+				mSize[1] = round(mTargetSize.y());
 				mSize[0] = (mSize.y() / textureSize.y()) * textureSize.x();
 			}else if(mTargetSize.x() && !mTargetSize.y())
 			{
-				mSize[1] = Math::round((mTargetSize.x() / textureSize.x()) * textureSize.y());
+				mSize[1] = round((mTargetSize.x() / textureSize.x()) * textureSize.y());
 				mSize[0] = (mSize.y() / textureSize.y()) * textureSize.x();
 			}
 		}
 	}
 	// mSize.y() should already be rounded
-	mTexture->rasterizeAt((size_t)Math::round(mSize.x()), (size_t)Math::round(mSize.y()));
+	mTexture->rasterizeAt((int)round(mSize.x()), (int)round(mSize.y()));
 
 	onSizeChanged();
 }
@@ -123,22 +93,12 @@ void ImageComponent::onSizeChanged()
 	updateVertices();
 }
 
-void ImageComponent::setDefaultImage(std::string path)
-{
-	mDefaultPath = path;
-}
-
 void ImageComponent::setImage(std::string path, bool tile)
 {
 	if(path.empty() || !ResourceManager::getInstance()->fileExists(path))
-	{
-		if(mDefaultPath.empty() || !ResourceManager::getInstance()->fileExists(mDefaultPath))
-			mTexture.reset();
-		else
-			mTexture = TextureResource::get(mDefaultPath, tile, mForceLoad, mDynamic);
-	} else {
+		mTexture.reset();
+	else
 		mTexture = TextureResource::get(path, tile, mForceLoad, mDynamic);
-	}
 
 	resize();
 }
@@ -161,73 +121,16 @@ void ImageComponent::setImage(const std::shared_ptr<TextureResource>& texture)
 
 void ImageComponent::setResize(float width, float height)
 {
-	mTargetSize = Vector2f(width, height);
+	mTargetSize << width, height;
 	mTargetIsMax = false;
-	mTargetIsMin = false;
 	resize();
 }
 
 void ImageComponent::setMaxSize(float width, float height)
 {
-	mTargetSize = Vector2f(width, height);
+	mTargetSize << width, height;
 	mTargetIsMax = true;
-	mTargetIsMin = false;
 	resize();
-}
-
-void ImageComponent::setMinSize(float width, float height)
-{
-	mTargetSize = Vector2f(width, height);
-	mTargetIsMax = false;
-	mTargetIsMin = true;
-	resize();
-}
-
-Vector2f ImageComponent::getRotationSize() const
-{
-	return mRotateByTargetSize ? mTargetSize : mSize;
-}
-
-void ImageComponent::setRotateByTargetSize(bool rotate)
-{
-	mRotateByTargetSize = rotate;
-}
-
-void ImageComponent::cropLeft(float percent)
-{
-	assert(percent >= 0.0f && percent <= 1.0f);
-	mTopLeftCrop.x() = percent;
-}
-
-void ImageComponent::cropTop(float percent)
-{
-	assert(percent >= 0.0f && percent <= 1.0f);
-	mTopLeftCrop.y() = percent;
-}
-
-void ImageComponent::cropRight(float percent)
-{
-	assert(percent >= 0.0f && percent <= 1.0f);
-	mBottomRightCrop.x() = 1.0f - percent;
-}
-
-void ImageComponent::cropBot(float percent)
-{
-	assert(percent >= 0.0f && percent <= 1.0f);
-	mBottomRightCrop.y() = 1.0f - percent;
-}
-
-void ImageComponent::crop(float left, float top, float right, float bot)
-{
-	cropLeft(left);
-	cropTop(top);
-	cropRight(right);
-	cropBot(bot);
-}
-
-void ImageComponent::uncrop()
-{
-	crop(0, 0, 0, 0);
 }
 
 void ImageComponent::setFlipX(bool flip)
@@ -265,17 +168,16 @@ void ImageComponent::updateVertices()
 
 	// we go through this mess to make sure everything is properly rounded
 	// if we just round vertices at the end, edge cases occur near sizes of 0.5
-	Vector2f size(Math::round(mSize.x()), Math::round(mSize.y()));
-	Vector2f topLeft(size * mTopLeftCrop);
-	Vector2f bottomRight(size * mBottomRightCrop);
+	Eigen::Vector2f topLeft(0.0, 0.0);
+	Eigen::Vector2f bottomRight(round(mSize.x()), round(mSize.y()));
 
-	mVertices[0].pos = Vector2f(topLeft.x(), topLeft.y());
-	mVertices[1].pos = Vector2f(topLeft.x(), bottomRight.y());
-	mVertices[2].pos = Vector2f(bottomRight.x(), topLeft.y());
+	mVertices[0].pos << topLeft.x(), topLeft.y();
+	mVertices[1].pos << topLeft.x(), bottomRight.y();
+	mVertices[2].pos << bottomRight.x(), topLeft.y();
 
-	mVertices[3].pos = Vector2f(bottomRight.x(), topLeft.y());
-	mVertices[4].pos = Vector2f(topLeft.x(), bottomRight.y());
-	mVertices[5].pos = Vector2f(bottomRight.x(), bottomRight.y());
+	mVertices[3].pos << bottomRight.x(), topLeft.y();
+	mVertices[4].pos << topLeft.x(), bottomRight.y();
+	mVertices[5].pos << bottomRight.x(), bottomRight.y();
 
 	float px, py;
 	if(mTexture->isTiled())
@@ -287,23 +189,23 @@ void ImageComponent::updateVertices()
 		py = 1;
 	}
 
-	mVertices[0].tex = Vector2f(mTopLeftCrop.x(), py - mTopLeftCrop.y());
-	mVertices[1].tex = Vector2f(mTopLeftCrop.x(), 1 - mBottomRightCrop.y());
-	mVertices[2].tex = Vector2f(px * mBottomRightCrop.x(), py - mTopLeftCrop.y());
+	mVertices[0].tex << 0, py;
+	mVertices[1].tex << 0, 0;
+	mVertices[2].tex << px, py;
 
-	mVertices[3].tex = Vector2f(px * mBottomRightCrop.x(), py - mTopLeftCrop.y());
-	mVertices[4].tex = Vector2f(mTopLeftCrop.x(), 1 - mBottomRightCrop.y());
-	mVertices[5].tex = Vector2f(px * mBottomRightCrop.x(), 1 - mBottomRightCrop.y());
+	mVertices[3].tex << px, py;
+	mVertices[4].tex << 0, 0;
+	mVertices[5].tex << px, 0;
 
 	if(mFlipX)
 	{
 		for(int i = 0; i < 6; i++)
-			mVertices[i].tex[0] = px - mVertices[i].tex[0];
+			mVertices[i].tex[0] = mVertices[i].tex[0] == px ? 0 : px;
 	}
 	if(mFlipY)
 	{
-		for(int i = 0; i < 6; i++)
-			mVertices[i].tex[1] = py - mVertices[i].tex[1];
+		for(int i = 1; i < 6; i++)
+			mVertices[i].tex[1] = mVertices[i].tex[1] == py ? 0 : py;
 	}
 }
 
@@ -312,18 +214,13 @@ void ImageComponent::updateColors()
 	Renderer::buildGLColorArray(mColors, mColorShift, 6);
 }
 
-void ImageComponent::render(const Transform4x4f& parentTrans)
+void ImageComponent::render(const Eigen::Affine3f& parentTrans)
 {
-	Transform4x4f trans = parentTrans * getTransform();
+	Eigen::Affine3f trans = parentTrans * getTransform();
 	Renderer::setMatrix(trans);
 
 	if(mTexture && mOpacity > 0)
 	{
-		if(Settings::getInstance()->getBool("DebugImage")) {
-			Vector2f targetSizePos = (mTargetSize - mSize) * mOrigin * -1;
-			Renderer::drawRect(targetSizePos.x(), targetSizePos.y(), mTargetSize.x(), mTargetSize.y(), 0xFF000033);
-			Renderer::drawRect(0.0f, 0.0f, mSize.x(), mSize.y(), 0x00000033);
-		}
 		if(mTexture->isInitialized())
 		{
 			// actually draw the image
@@ -417,31 +314,25 @@ void ImageComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const s
 		return;
 	}
 
-	Vector2f scale = getParent() ? getParent()->getSize() : Vector2f((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
+	Eigen::Vector2f scale = getParent() ? getParent()->getSize() : Eigen::Vector2f((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
 	
 	if(properties & POSITION && elem->has("pos"))
 	{
-		Vector2f denormalized = elem->get<Vector2f>("pos") * scale;
-		setPosition(Vector3f(denormalized.x(), denormalized.y(), 0));
+		Eigen::Vector2f denormalized = elem->get<Eigen::Vector2f>("pos").cwiseProduct(scale);
+		setPosition(Eigen::Vector3f(denormalized.x(), denormalized.y(), 0));
 	}
 
 	if(properties & ThemeFlags::SIZE)
 	{
 		if(elem->has("size"))
-			setResize(elem->get<Vector2f>("size") * scale);
+			setResize(elem->get<Eigen::Vector2f>("size").cwiseProduct(scale));
 		else if(elem->has("maxSize"))
-			setMaxSize(elem->get<Vector2f>("maxSize") * scale);
-		else if(elem->has("minSize"))
-			setMinSize(elem->get<Vector2f>("minSize") * scale);
+			setMaxSize(elem->get<Eigen::Vector2f>("maxSize").cwiseProduct(scale));
 	}
 
 	// position + size also implies origin
 	if((properties & ORIGIN || (properties & POSITION && properties & ThemeFlags::SIZE)) && elem->has("origin"))
-		setOrigin(elem->get<Vector2f>("origin"));
-
-	if(elem->has("default")) {
-		setDefaultImage(elem->get<std::string>("default"));
-	}
+		setOrigin(elem->get<Eigen::Vector2f>("origin"));
 
 	if(properties & PATH && elem->has("path"))
 	{
@@ -456,7 +347,7 @@ void ImageComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const s
 		if(elem->has("rotation"))
 			setRotationDegrees(elem->get<float>("rotation"));
 		if(elem->has("rotationOrigin"))
-			setRotationOrigin(elem->get<Vector2f>("rotationOrigin"));
+			setRotationOrigin(elem->get<Eigen::Vector2f>("rotationOrigin"));
 	}
 
 	if(properties & ThemeFlags::Z_INDEX && elem->has("zIndex"))

@@ -1,17 +1,17 @@
 #pragma once
-#ifndef ES_APP_GUIS_GUI_SCRAPER_START_H
-#define ES_APP_GUIS_GUI_SCRAPER_START_H
 
-#include "components/MenuComponent.h"
+#include "GuiComponent.h"
+#include "SystemData.h"
 #include "scrapers/Scraper.h"
-
-class FileData;
-template<typename T>
-class OptionListComponent;
-class SwitchComponent;
-class SystemData;
+#include "components/MenuComponent.h"
+#include <queue>
 
 typedef std::function<bool(SystemData*, FileData*)> GameFilterFunc;
+
+template<typename T>
+class OptionListComponent;
+
+class SwitchComponent;
 
 //The starting point for a multi-game scrape.
 //Allows the user to set various parameters (to set filters, to set which systems to scrape, to enable manual mode).
@@ -36,5 +36,3 @@ private:
 
 	MenuComponent mMenu;
 };
-
-#endif // ES_APP_GUIS_GUI_SCRAPER_START_H

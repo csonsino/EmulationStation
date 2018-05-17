@@ -1,13 +1,11 @@
 #pragma once
-#ifndef ES_CORE_COMPONENTS_HELP_COMPONENT_H
-#define ES_CORE_COMPONENTS_HELP_COMPONENT_H
 
 #include "GuiComponent.h"
 #include "HelpStyle.h"
 
-class ComponentGrid;
 class ImageComponent;
 class TextureResource;
+class ComponentGrid;
 
 class HelpComponent : public GuiComponent
 {
@@ -17,7 +15,7 @@ public:
 	void clearPrompts();
 	void setPrompts(const std::vector<HelpPrompt>& prompts);
 
-	void render(const Transform4x4f& parent) override;
+	void render(const Eigen::Affine3f& parent) override;
 	void setOpacity(unsigned char opacity) override;
 
 	void setStyle(const HelpStyle& style);
@@ -32,5 +30,3 @@ private:
 	std::vector<HelpPrompt> mPrompts;
 	HelpStyle mStyle;
 };
-
-#endif // ES_CORE_COMPONENTS_HELP_COMPONENT_H

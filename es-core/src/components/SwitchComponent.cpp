@@ -1,7 +1,7 @@
 #include "SwitchComponent.h"
-
-#include "resources/Font.h"
 #include "Renderer.h"
+#include "resources/Font.h"
+#include "Window.h"
 
 SwitchComponent::SwitchComponent(Window* window, bool state) : GuiComponent(window), mImage(window), mState(state)
 {
@@ -27,9 +27,9 @@ bool SwitchComponent::input(InputConfig* config, Input input)
 	return false;
 }
 
-void SwitchComponent::render(const Transform4x4f& parentTrans)
+void SwitchComponent::render(const Eigen::Affine3f& parentTrans)
 {
-	Transform4x4f trans = parentTrans * getTransform();
+	Eigen::Affine3f trans = parentTrans * getTransform();
 	
 	mImage.render(trans);
 

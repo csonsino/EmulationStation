@@ -1,11 +1,10 @@
 #pragma once
-#ifndef ES_CORE_RESOURCES_TEXTURE_DATA_H
-#define ES_CORE_RESOURCES_TEXTURE_DATA_H
 
-#include "platform.h"
-#include GLHEADER
-#include <mutex>
 #include <string>
+#include <memory>
+#include "platform.h"
+#include <mutex>
+#include GLHEADER
 
 class TextureResource;
 
@@ -62,5 +61,3 @@ private:
 	bool			mScalable;
 	bool			mReloadable;
 };
-
-#endif // ES_CORE_RESOURCES_TEXTURE_DATA_H

@@ -1,11 +1,16 @@
 #include "guis/GuiSlideshowScreensaverOptions.h"
-
-#include "components/SliderComponent.h"
-#include "components/SwitchComponent.h"
-#include "guis/GuiTextEditPopup.h"
-#include "utils/StringUtil.h"
-#include "Settings.h"
 #include "Window.h"
+#include "Settings.h"
+#include "views/ViewController.h"
+
+#include "components/SwitchComponent.h"
+#include "components/SliderComponent.h"
+#include "components/TextComponent.h"
+#include "components/OptionListComponent.h"
+#include "components/MenuComponent.h"
+#include "guis/GuiMsgBox.h"
+#include "guis/GuiTextEditPopup.h"
+#include "PowerSaver.h"
 
 GuiSlideshowScreensaverOptions::GuiSlideshowScreensaverOptions(Window* window, const char* title) : GuiScreensaverOptions(window, title)
 {
@@ -16,7 +21,7 @@ GuiSlideshowScreensaverOptions::GuiSlideshowScreensaverOptions(Window* window, c
 	sss_image_sec->setValue((float)(Settings::getInstance()->getInt("ScreenSaverSwapImageTimeout") / (1000)));
 	addWithLabel(row, "SWAP IMAGE AFTER (SECS)", sss_image_sec);
 	addSaveFunc([sss_image_sec] {
-		int playNextTimeout = (int)Math::round(sss_image_sec->getValue()) * (1000);
+		int playNextTimeout = (int)round(sss_image_sec->getValue()) * (1000);
 		Settings::getInstance()->setInt("ScreenSaverSwapImageTimeout", playNextTimeout);
 		PowerSaver::updateTimeouts();
 	});
@@ -73,7 +78,7 @@ void GuiSlideshowScreensaverOptions::addWithLabel(ComponentListRow row, const st
 {
 	row.elements.clear();
 
-	auto lbl = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(label), Font::get(FONT_SIZE_MEDIUM), 0x777777FF);
+	auto lbl = std::make_shared<TextComponent>(mWindow, strToUpper(label), Font::get(FONT_SIZE_MEDIUM), 0x777777FF);
 	row.addElement(lbl, true); // label
 
 	row.addElement(component, false, true);
@@ -85,7 +90,7 @@ void GuiSlideshowScreensaverOptions::addEditableTextComponent(ComponentListRow r
 {
 	row.elements.clear();
 
-	auto lbl = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(label), Font::get(FONT_SIZE_MEDIUM), 0x777777FF);
+	auto lbl = std::make_shared<TextComponent>(mWindow, strToUpper(label), Font::get(FONT_SIZE_MEDIUM), 0x777777FF);
 	row.addElement(lbl, true); // label
 
 	row.addElement(ed, true);
@@ -96,7 +101,7 @@ void GuiSlideshowScreensaverOptions::addEditableTextComponent(ComponentListRow r
 
 	auto bracket = std::make_shared<ImageComponent>(mWindow);
 	bracket->setImage(":/arrow.svg");
-	bracket->setResize(Vector2f(0, lbl->getFont()->getLetterHeight()));
+	bracket->setResize(Eigen::Vector2f(0, lbl->getFont()->getLetterHeight()));
 	row.addElement(bracket, false);
 
 	auto updateVal = [ed](const std::string& newVal) { ed->setValue(newVal); }; // ok callback (apply new value to ed)

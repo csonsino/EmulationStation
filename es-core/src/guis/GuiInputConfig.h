@@ -1,13 +1,11 @@
 #pragma once
-#ifndef ES_CORE_GUIS_GUI_INPUT_CONFIG_H
-#define ES_CORE_GUIS_GUI_INPUT_CONFIG_H
 
-#include "components/BusyComponent.h"
-#include "components/ComponentGrid.h"
-#include "components/NinePatchComponent.h"
 #include "GuiComponent.h"
+#include "components/NinePatchComponent.h"
+#include "components/ComponentGrid.h"
+#include "components/ComponentList.h"
+#include "components/BusyComponent.h"
 
-class ComponentList;
 class TextComponent;
 
 class GuiInputConfig : public GuiComponent
@@ -52,5 +50,3 @@ private:
 
 	BusyComponent mBusyAnim;	
 };
-
-#endif // ES_CORE_GUIS_GUI_INPUT_CONFIG_H

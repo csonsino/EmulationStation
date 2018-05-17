@@ -1,9 +1,8 @@
-#pragma once
-#ifndef ES_CORE_COMPONENTS_TEXT_COMPONENT_H
-#define ES_CORE_COMPONENTS_TEXT_COMPONENT_H
+#ifndef _TEXTCOMPONENT_H_
+#define _TEXTCOMPONENT_H_
 
-#include "resources/Font.h"
 #include "GuiComponent.h"
+#include "resources/Font.h"
 
 class ThemeData;
 
@@ -17,7 +16,7 @@ class TextComponent : public GuiComponent
 public:
 	TextComponent(Window* window);
 	TextComponent(Window* window, const std::string& text, const std::shared_ptr<Font>& font, unsigned int color = 0x000000FF, Alignment align = ALIGN_LEFT,
-		Vector3f pos = Vector3f::Zero(), Vector2f size = Vector2f::Zero(), unsigned int bgcolor = 0x00000000);
+		Eigen::Vector3f pos = Eigen::Vector3f::Zero(), Eigen::Vector2f size = Eigen::Vector2f::Zero(), unsigned int bgcolor = 0x00000000);
 
 	void setFont(const std::shared_ptr<Font>& font);
 	void setUppercase(bool uppercase);
@@ -30,7 +29,7 @@ public:
 	void setBackgroundColor(unsigned int color);
 	void setRenderBackground(bool render);
 
-	void render(const Transform4x4f& parentTrans) override;
+	void render(const Eigen::Affine3f& parentTrans) override;
 
 	std::string getValue() const override;
 	void setValue(const std::string& value) override;
@@ -56,7 +55,7 @@ private:
 
 	std::shared_ptr<Font> mFont;
 	bool mUppercase;
-	Vector2i mAutoCalcExtent;
+	Eigen::Matrix<bool, 1, 2> mAutoCalcExtent;
 	std::string mText;
 	std::shared_ptr<TextCache> mTextCache;
 	Alignment mHorizontalAlignment;
@@ -64,4 +63,4 @@ private:
 	float mLineSpacing;
 };
 
-#endif // ES_CORE_COMPONENTS_TEXT_COMPONENT_H
+#endif

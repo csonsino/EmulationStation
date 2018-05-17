@@ -1,15 +1,17 @@
 #include "guis/GuiScraperMulti.h"
-
-#include "components/ButtonComponent.h"
-#include "components/MenuComponent.h"
-#include "components/ScraperSearchComponent.h"
-#include "components/TextComponent.h"
-#include "guis/GuiMsgBox.h"
+#include "Renderer.h"
+#include "Log.h"
 #include "views/ViewController.h"
 #include "Gamelist.h"
 #include "PowerSaver.h"
-#include "SystemData.h"
-#include "Window.h"
+
+#include "components/TextComponent.h"
+#include "components/ButtonComponent.h"
+#include "components/ScraperSearchComponent.h"
+#include "components/MenuComponent.h" // for makeButtonGrid
+#include "guis/GuiMsgBox.h"
+
+using namespace Eigen;
 
 GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchParams>& searches, bool approveResults) :
 	GuiComponent(window), mBackground(window, ":/frame.png"), mGrid(window, Vector2i(1, 5)),
@@ -23,7 +25,7 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 	PowerSaver::pause();
 	mIsProcessing = true;
 
-	mTotalGames = (int)mSearchQueue.size();
+	mTotalGames = mSearchQueue.size();
 	mCurrentGame = 0;
 	mTotalSuccessful = 0;
 	mTotalSkipped = 0;
@@ -74,7 +76,7 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 GuiScraperMulti::~GuiScraperMulti()
 {
 	// view type probably changed (basic -> detailed)
-	for(auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
+	for(auto it = SystemData::sSystemVector.begin(); it != SystemData::sSystemVector.end(); it++)
 		ViewController::get()->reloadGameListView(*it, false);
 }
 
@@ -99,11 +101,11 @@ void GuiScraperMulti::doNextSearch()
 
 	// update title
 	std::stringstream ss;
-	mSystem->setText(Utils::String::toUpper(mSearchQueue.front().system->getFullName()));
+	mSystem->setText(strToUpper(mSearchQueue.front().system->getFullName()));
 
 	// update subtitle
 	ss.str(""); // clear
-	ss << "GAME " << (mCurrentGame + 1) << " OF " << mTotalGames << " - " << Utils::String::toUpper(Utils::FileSystem::getFileName(mSearchQueue.front().game->getPath()));
+	ss << "GAME " << (mCurrentGame + 1) << " OF " << mTotalGames << " - " << strToUpper(mSearchQueue.front().game->getPath().filename().string());
 	mSubtitle->setText(ss.str());
 
 	mSearchComp->search(mSearchQueue.front());

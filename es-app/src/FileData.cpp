@@ -1,21 +1,15 @@
 #include "FileData.h"
-
-#include "utils/FileSystemUtil.h"
-#include "utils/StringUtil.h"
-#include "utils/TimeUtil.h"
-#include "AudioManager.h"
-#include "CollectionSystemManager.h"
-#include "FileFilterIndex.h"
 #include "FileSorts.h"
-#include "Log.h"
-#include "MameNames.h"
-#include "platform.h"
+#include "views/ViewController.h"
 #include "SystemData.h"
+#include "Log.h"
+#include "AudioManager.h"
 #include "VolumeControl.h"
-#include "Window.h"
-#include <assert.h>
+#include "Util.h"
 
-FileData::FileData(FileType type, const std::string& path, SystemEnvironmentData* envData, SystemData* system)
+namespace fs = boost::filesystem;
+
+FileData::FileData(FileType type, const fs::path& path, SystemEnvironmentData* envData, SystemData* system)
 	: mType(type), mPath(path), mSystem(system), mEnvData(envData), mSourceFileData(NULL), mParent(NULL), metadata(type == GAME ? GAME_METADATA : FOLDER_METADATA) // metadata is REALLY set in the constructor!
 {
 	// metadata needs at least a name field (since that's what getName() will return)
@@ -37,44 +31,24 @@ FileData::~FileData()
 
 std::string FileData::getDisplayName() const
 {
-	std::string stem = Utils::FileSystem::getStem(mPath);
+	std::string stem = mPath.stem().generic_string();
 	if(mSystem && mSystem->hasPlatformId(PlatformIds::ARCADE) || mSystem->hasPlatformId(PlatformIds::NEOGEO))
-		stem = MameNames::getInstance()->getRealName(stem);
+		stem = PlatformIds::getCleanMameName(stem.c_str());
 
 	return stem;
 }
 
 std::string FileData::getCleanName() const
 {
-	return Utils::String::removeParenthesis(this->getDisplayName());
+	return removeParenthesis(this->getDisplayName());
 }
 
-const std::string FileData::getThumbnailPath() const
+const std::string& FileData::getThumbnailPath() const
 {
-	std::string thumbnail = metadata.get("thumbnail");
-
-	// no thumbnail, try image
-	if(thumbnail.empty())
-	{
-		thumbnail = metadata.get("image");
-
-		// no image, try to use local image
-		if(thumbnail.empty())
-		{
-			const char* extList[2] = { ".png", ".jpg" };
-			for(int i = 0; i < 2; i++)
-			{
-				if(thumbnail.empty())
-				{
-					std::string path = mEnvData->mStartPath + "/images/" + getDisplayName() + "-image" + extList[i];
-					if(Utils::FileSystem::exists(path))
-						thumbnail = path;
-				}
-			}
-		}
-	}
-
-	return thumbnail;
+	if(!metadata.get("thumbnail").empty())
+		return metadata.get("thumbnail");
+	else
+		return metadata.get("image");
 }
 
 const std::string& FileData::getName()
@@ -82,20 +56,12 @@ const std::string& FileData::getName()
 	return metadata.get("name");
 }
 
-const std::string& FileData::getSortName()
-{
-	if (metadata.get("sortname").empty())
-		return metadata.get("name");
-	else
-		return metadata.get("sortname");
-}
-
 const std::vector<FileData*>& FileData::getChildrenListToDisplay() {
 
 	FileFilterIndex* idx = CollectionSystemManager::get()->getSystemToView(mSystem)->getIndex();
 	if (idx->isFiltered()) {
 		mFilteredChildren.clear();
-		for(auto it = mChildren.cbegin(); it != mChildren.cend(); it++)
+		for(auto it = mChildren.begin(); it != mChildren.end(); it++)
 		{
 			if (idx->showFile((*it))) {
 				mFilteredChildren.push_back(*it);
@@ -110,63 +76,14 @@ const std::vector<FileData*>& FileData::getChildrenListToDisplay() {
 	}
 }
 
-const std::string FileData::getVideoPath() const
+const std::string& FileData::getVideoPath() const
 {
-	std::string video = metadata.get("video");
-
-	// no video, try to use local video
-	if(video.empty())
-	{
-		std::string path = mEnvData->mStartPath + "/images/" + getDisplayName() + "-video.mp4";
-		if(Utils::FileSystem::exists(path))
-			video = path;
-	}
-
-	return video;
+	return metadata.get("video");
 }
 
-const std::string FileData::getMarqueePath() const
+const std::string& FileData::getMarqueePath() const
 {
-	std::string marquee = metadata.get("marquee");
-
-	// no marquee, try to use local marquee
-	if(marquee.empty())
-	{
-		const char* extList[2] = { ".png", ".jpg" };
-		for(int i = 0; i < 2; i++)
-		{
-			if(marquee.empty())
-			{
-				std::string path = mEnvData->mStartPath + "/images/" + getDisplayName() + "-marquee" + extList[i];
-				if(Utils::FileSystem::exists(path))
-					marquee = path;
-			}
-		}
-	}
-
-	return marquee;
-}
-
-const std::string FileData::getImagePath() const
-{
-	std::string image = metadata.get("image");
-
-	// no image, try to use local image
-	if(image.empty())
-	{
-		const char* extList[2] = { ".png", ".jpg" };
-		for(int i = 0; i < 2; i++)
-		{
-			if(image.empty())
-			{
-				std::string path = mEnvData->mStartPath + "/images/" + getDisplayName() + "-image" + extList[i];
-				if(Utils::FileSystem::exists(path))
-					image = path;
-			}
-		}
-	}
-
-	return image;
+	return metadata.get("marquee");
 }
 
 std::vector<FileData*> FileData::getFilesRecursive(unsigned int typeMask, bool displayedOnly) const
@@ -174,7 +91,7 @@ std::vector<FileData*> FileData::getFilesRecursive(unsigned int typeMask, bool d
 	std::vector<FileData*> out;
 	FileFilterIndex* idx = mSystem->getIndex();
 
-	for(auto it = mChildren.cbegin(); it != mChildren.cend(); it++)
+	for(auto it = mChildren.begin(); it != mChildren.end(); it++)
 	{
 		if((*it)->getType() & typeMask)
 		{
@@ -185,7 +102,7 @@ std::vector<FileData*> FileData::getFilesRecursive(unsigned int typeMask, bool d
 		if((*it)->getChildren().size() > 0)
 		{
 			std::vector<FileData*> subchildren = (*it)->getFilesRecursive(typeMask, displayedOnly);
-			out.insert(out.cend(), subchildren.cbegin(), subchildren.cend());
+			out.insert(out.end(), subchildren.cbegin(), subchildren.cend());
 		}
 	}
 
@@ -207,7 +124,7 @@ void FileData::addChild(FileData* file)
 	assert(file->getParent() == NULL);
 
 	const std::string key = file->getKey();
-	if (mChildrenByFilename.find(key) == mChildrenByFilename.cend())
+	if (mChildrenByFilename.find(key) == mChildrenByFilename.end())
 	{
 		mChildrenByFilename[key] = file;
 		mChildren.push_back(file);
@@ -220,7 +137,7 @@ void FileData::removeChild(FileData* file)
 	assert(mType == FOLDER);
 	assert(file->getParent() == this);
 	mChildrenByFilename.erase(file->getKey());
-	for(auto it = mChildren.cbegin(); it != mChildren.cend(); it++)
+	for(auto it = mChildren.begin(); it != mChildren.end(); it++)
 	{
 		if(*it == file)
 		{
@@ -239,7 +156,7 @@ void FileData::sort(ComparisonFunction& comparator, bool ascending)
 {
 	std::stable_sort(mChildren.begin(), mChildren.end(), comparator);
 
-	for(auto it = mChildren.cbegin(); it != mChildren.cend(); it++)
+	for(auto it = mChildren.begin(); it != mChildren.end(); it++)
 	{
 		if((*it)->getChildren().size() > 0)
 			(*it)->sort(comparator, ascending);
@@ -264,13 +181,13 @@ void FileData::launchGame(Window* window)
 
 	std::string command = mEnvData->mLaunchCommand;
 
-	const std::string rom      = Utils::FileSystem::getEscapedPath(getPath());
-	const std::string basename = Utils::FileSystem::getStem(getPath());
-	const std::string rom_raw  = Utils::FileSystem::getPreferredPath(getPath());
+	const std::string rom = escapePath(getPath());
+	const std::string basename = getPath().stem().string();
+	const std::string rom_raw = fs::path(getPath()).make_preferred().string();
 
-	command = Utils::String::replace(command, "%ROM%", rom);
-	command = Utils::String::replace(command, "%BASENAME%", basename);
-	command = Utils::String::replace(command, "%ROM_RAW%", rom_raw);
+	command = strreplace(command, "%ROM%", rom);
+	command = strreplace(command, "%BASENAME%", basename);
+	command = strreplace(command, "%ROM_RAW%", rom_raw);
 
 	LOG(LogInfo) << "	" << command;
 	int exitCode = runSystemCommand(command);
@@ -282,6 +199,7 @@ void FileData::launchGame(Window* window)
 
 	window->init();
 	VolumeControl::getInstance()->init();
+	AudioManager::getInstance()->init();
 	window->normalizeNextUpdate();
 
 	//update number of times the game has been launched
@@ -292,7 +210,8 @@ void FileData::launchGame(Window* window)
 	gameToUpdate->metadata.set("playcount", std::to_string(static_cast<long long>(timesPlayed)));
 
 	//update last played time
-	gameToUpdate->metadata.set("lastplayed", Utils::Time::DateTime(Utils::Time::now()));
+	boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
+	gameToUpdate->metadata.setTime("lastplayed", time);
 	CollectionSystemManager::get()->refreshCollectionSystems(gameToUpdate);
 }
 
@@ -333,8 +252,9 @@ void CollectionFileData::refreshMetadata()
 const std::string& CollectionFileData::getName()
 {
 	if (mDirty) {
-		mCollectionFileName  = Utils::String::removeParenthesis(mSourceFileData->metadata.get("name"));
-		mCollectionFileName += " [" + Utils::String::toUpper(mSourceFileData->getSystem()->getName()) + "]";
+		mCollectionFileName = removeParenthesis(mSourceFileData->metadata.get("name"));
+		boost::trim(mCollectionFileName);
+		mCollectionFileName += " [" + strToUpper(mSourceFileData->getSystem()->getName()) + "]";
 		mDirty = false;
 	}
 	return mCollectionFileName;

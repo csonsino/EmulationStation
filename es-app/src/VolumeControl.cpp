@@ -1,11 +1,8 @@
 #include "VolumeControl.h"
-
-#include "math/Misc.h"
-#include "Log.h"
 #include "Settings.h"
-#ifdef WIN32
-#include <mmdeviceapi.h>
-#endif
+
+#include "Log.h"
+
 
 #if defined(__linux__)
     #ifdef _RPI_
@@ -45,7 +42,6 @@ VolumeControl::VolumeControl(const VolumeControl & right):
 	, mixerHandle(nullptr), endpointVolume(nullptr)
 #endif
 {
-	(void)right;
 	sInstance = right.sInstance;
 }
 
@@ -301,7 +297,7 @@ int VolumeControl::getVolume() const
 		mixerControlDetails.cbDetails = sizeof(MIXERCONTROLDETAILS_UNSIGNED);
 		if (mixerGetControlDetails((HMIXEROBJ)mixerHandle, &mixerControlDetails, MIXER_GETCONTROLDETAILSF_VALUE) == MMSYSERR_NOERROR) 
 		{
-			volume = (int)Math::round((value.dwValue * 100) / 65535.0f);
+			volume = (uint8_t)round((value.dwValue * 100) / 65535);
 		}
 		else
 		{
@@ -314,7 +310,7 @@ int VolumeControl::getVolume() const
 		float floatVolume = 0.0f; //0-1
 		if (endpointVolume->GetMasterVolumeLevelScalar(&floatVolume) == S_OK)
 		{
-			volume = (int)Math::round(floatVolume * 100.0f);
+			volume = (uint8_t)round(floatVolume * 100.0f);
 			LOG(LogInfo) << " getting volume as " << volume << " ( from float " << floatVolume << ")";
 		}
 		else

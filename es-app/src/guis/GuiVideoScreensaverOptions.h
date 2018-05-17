@@ -1,7 +1,7 @@
-#pragma once
-#ifndef ES_APP_GUIS_GUI_VIDEO_SCREENSAVER_OPTIONS_H
-#define ES_APP_GUIS_GUI_VIDEO_SCREENSAVER_OPTIONS_H
+#ifndef _GUI_VIDEO_SCREENSAVER_OPTIONS_H_
+#define _GUI_VIDEO_SCREENSAVER_OPTIONS_H_
 
+#include "components/MenuComponent.h"
 #include "GuiScreensaverOptions.h"
 
 class GuiVideoScreensaverOptions : public GuiScreensaverOptions
@@ -13,4 +13,4 @@ public:
 	void save() override;
 };
 
-#endif // ES_APP_GUIS_GUI_VIDEO_SCREENSAVER_OPTIONS_H
+#endif // _GUI_VIDEO_SCREENSAVER_OPTIONS_H_

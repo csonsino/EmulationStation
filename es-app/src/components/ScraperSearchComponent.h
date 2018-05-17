@@ -1,18 +1,19 @@
 #pragma once
-#ifndef ES_APP_COMPONENTS_SCRAPER_SEARCH_COMPONENT_H
-#define ES_APP_COMPONENTS_SCRAPER_SEARCH_COMPONENT_H
 
-#include "components/BusyComponent.h"
-#include "components/ComponentGrid.h"
-#include "scrapers/Scraper.h"
 #include "GuiComponent.h"
+#include "scrapers/Scraper.h"
+#include "components/ComponentGrid.h"
+#include "components/BusyComponent.h"
+#include <functional>
 
 class ComponentList;
-class DateTimeComponent;
 class ImageComponent;
 class RatingComponent;
-class ScrollableContainer;
 class TextComponent;
+class DateTimeComponent;
+class ScrollableContainer;
+class HttpReq;
+class AnimatedImageComponent;
 
 class ScraperSearchComponent : public GuiComponent
 {
@@ -38,7 +39,7 @@ public:
 
 	bool input(InputConfig* config, Input input) override;
 	void update(int deltaTime) override;
-	void render(const Transform4x4f& parentTrans) override;
+	void render(const Eigen::Affine3f& parentTrans) override;
 	std::vector<HelpPrompt> getHelpPrompts() override;
 	void onSizeChanged() override;	
 	void onFocusGained() override;
@@ -101,5 +102,3 @@ private:
 
 	BusyComponent mBusyAnim;
 };
-
-#endif // ES_APP_COMPONENTS_SCRAPER_SEARCH_COMPONENT_H

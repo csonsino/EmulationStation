@@ -1,16 +1,14 @@
 #include "AudioManager.h"
 
-#include "Log.h"
-#include "Settings.h"
-#include "Sound.h"
 #include <SDL.h>
+#include "Log.h"
 
 std::vector<std::shared_ptr<Sound>> AudioManager::sSoundVector;
 SDL_AudioSpec AudioManager::sAudioFormat;
 std::shared_ptr<AudioManager> AudioManager::sInstance;
 
 
-void AudioManager::mixAudio(void* /*unused*/, Uint8 *stream, int len)
+void AudioManager::mixAudio(void *unused, Uint8 *stream, int len)
 {
 	bool stillPlaying = false;
 
@@ -64,7 +62,7 @@ AudioManager::~AudioManager()
 std::shared_ptr<AudioManager> & AudioManager::getInstance()
 {
 	//check if an AudioManager instance is already created, if not create one
-	if (sInstance == nullptr && Settings::getInstance()->getBool("EnableSounds")) {
+	if (sInstance == nullptr) {
 		sInstance = std::shared_ptr<AudioManager>(new AudioManager);
 	}
 	return sInstance;
@@ -108,7 +106,6 @@ void AudioManager::deinit()
 	//completely tear down SDL audio. else SDL hogs audio resources and emulators might fail to start...
 	SDL_CloseAudio();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	sInstance = NULL;
 }
 
 void AudioManager::registerSound(std::shared_ptr<Sound> & sound)
@@ -125,7 +122,7 @@ void AudioManager::unregisterSound(std::shared_ptr<Sound> & sound)
 		if(sSoundVector.at(i) == sound)
 		{
 			sSoundVector[i]->stop();
-			sSoundVector.erase(sSoundVector.cbegin() + i);
+			sSoundVector.erase(sSoundVector.begin() + i);
 			return;
 		}
 	}

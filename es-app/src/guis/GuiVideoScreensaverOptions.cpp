@@ -1,10 +1,14 @@
 #include "guis/GuiVideoScreensaverOptions.h"
-
-#include "components/OptionListComponent.h"
-#include "components/SliderComponent.h"
-#include "components/SwitchComponent.h"
-#include "guis/GuiMsgBox.h"
+#include "Window.h"
 #include "Settings.h"
+#include "views/ViewController.h"
+
+#include "components/SwitchComponent.h"
+#include "components/SliderComponent.h"
+#include "components/OptionListComponent.h"
+#include "components/MenuComponent.h"
+#include "guis/GuiMsgBox.h"
+#include "PowerSaver.h"
 
 GuiVideoScreensaverOptions::GuiVideoScreensaverOptions(Window* window, const char* title) : GuiScreensaverOptions(window, title)
 {
@@ -13,7 +17,7 @@ GuiVideoScreensaverOptions::GuiVideoScreensaverOptions(Window* window, const cha
 	swap->setValue((float)(Settings::getInstance()->getInt("ScreenSaverSwapVideoTimeout") / (1000)));
 	addWithLabel("SWAP VIDEO AFTER (SECS)", swap);
 	addSaveFunc([swap] {
-		int playNextTimeout = (int)Math::round(swap->getValue()) * (1000);
+		int playNextTimeout = (int)round(swap->getValue()) * (1000);
 		Settings::getInstance()->setInt("ScreenSaverSwapVideoTimeout", playNextTimeout);
 		PowerSaver::updateTimeouts();
 	});
@@ -37,7 +41,7 @@ GuiVideoScreensaverOptions::GuiVideoScreensaverOptions(Window* window, const cha
 	info_type.push_back("always");
 	info_type.push_back("start & end");
 	info_type.push_back("never");
-	for(auto it = info_type.cbegin(); it != info_type.cend(); it++)
+	for(auto it = info_type.begin(); it != info_type.end(); it++)
 		ss_info->add(*it, *it, Settings::getInstance()->getString("ScreenSaverGameInfo") == *it);
 	addWithLabel("SHOW GAME INFO ON SCREENSAVER", ss_info);
 	addSaveFunc([ss_info, this] { Settings::getInstance()->setString("ScreenSaverGameInfo", ss_info->getSelected()); });

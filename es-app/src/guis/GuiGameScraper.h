@@ -1,10 +1,8 @@
 #pragma once
-#ifndef ES_APP_GUIS_GUI_GAME_SCRAPER_H
-#define ES_APP_GUIS_GUI_GAME_SCRAPER_H
 
-#include "components/NinePatchComponent.h"
-#include "components/ScraperSearchComponent.h"
 #include "GuiComponent.h"
+#include "components/ScraperSearchComponent.h"
+#include "components/NinePatchComponent.h"
 
 class GuiGameScraper : public GuiComponent
 {
@@ -33,5 +31,3 @@ private:
 
 	std::function<void()> mCancelFunc;
 };
-
-#endif // ES_APP_GUIS_GUI_GAME_SCRAPER_H

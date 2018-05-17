@@ -1,9 +1,12 @@
 #pragma once
-#ifndef ES_CORE_COMPONENTS_ILIST_H
-#define ES_CORE_COMPONENTS_ILIST_H
 
+#include <string>
+#include <vector>
+#include <memory>
+#include "GuiComponent.h"
 #include "components/ImageComponent.h"
 #include "resources/Font.h"
+#include "Renderer.h"
 #include "PowerSaver.h"
 
 enum CursorState
@@ -129,21 +132,21 @@ public:
 		return mEntries.at(mCursor).object;
 	}
 
-	void setCursor(typename std::vector<Entry>::const_iterator& it)
+	void setCursor(typename std::vector<Entry>::iterator& it)
 	{
-		assert(it != mEntries.cend());
-		mCursor = it - mEntries.cbegin();
+		assert(it != mEntries.end());
+		mCursor = it - mEntries.begin();
 		onCursorChanged(CURSOR_STOPPED);
 	}
 
 	// returns true if successful (select is in our list), false if not
 	bool setCursor(const UserData& obj)
 	{
-		for(auto it = mEntries.cbegin(); it != mEntries.cend(); it++)
+		for(auto it = mEntries.begin(); it != mEntries.end(); it++)
 		{
 			if((*it).object == obj)
 			{
-				mCursor = (int)(it - mEntries.cbegin());
+				mCursor = it - mEntries.begin();
 				onCursorChanged(CURSOR_STOPPED);
 				return true;
 			}
@@ -160,7 +163,7 @@ public:
 
 	bool remove(const UserData& obj)
 	{
-		for(auto it = mEntries.cbegin(); it != mEntries.cend(); it++)
+		for(auto it = mEntries.begin(); it != mEntries.end(); it++)
 		{
 			if((*it).object == obj)
 			{
@@ -172,12 +175,12 @@ public:
 		return false;
 	}
 
-	inline int size() const { return (int)mEntries.size(); }
+	inline int size() const { return mEntries.size(); }
 
 protected:
-	void remove(typename std::vector<Entry>::const_iterator& it)
+	void remove(typename std::vector<Entry>::iterator& it)
 	{
-		if(mCursor > 0 && it - mEntries.cbegin() <= mCursor)
+		if(mCursor > 0 && it - mEntries.begin() <= mCursor)
 		{
 			mCursor--;
 			onCursorChanged(CURSOR_STOPPED);
@@ -244,7 +247,7 @@ protected:
 			scroll(mScrollVelocity);
 	}
 
-	void listRenderTitleOverlay(const Transform4x4f& /*trans*/)
+	void listRenderTitleOverlay(const Eigen::Affine3f& trans)
 	{
 		if(size() == 0 || !mTitleOverlayFont || mTitleOverlayOpacity == 0)
 			return;
@@ -252,11 +255,11 @@ protected:
 		// we don't bother caching this because it's only two letters and will change pretty much every frame if we're scrolling
 		const std::string text = getSelectedName().size() >= 2 ? getSelectedName().substr(0, 2) : "??";
 
-		Vector2f off = mTitleOverlayFont->sizeText(text);
+		Eigen::Vector2f off = mTitleOverlayFont->sizeText(text);
 		off[0] = (Renderer::getScreenWidth() - off.x()) * 0.5f;
 		off[1] = (Renderer::getScreenHeight() - off.y()) * 0.5f;
 		
-		Transform4x4f identTrans = Transform4x4f::Identity();
+		Eigen::Affine3f identTrans = Eigen::Affine3f::Identity();
 
 		mGradient.setOpacity(mTitleOverlayOpacity);
 		mGradient.render(identTrans);
@@ -305,8 +308,6 @@ protected:
 		onCursorChanged((mScrollTier > 0) ? CURSOR_SCROLLING : CURSOR_STOPPED);
 	}
 
-	virtual void onCursorChanged(const CursorState& /*state*/) {}
-	virtual void onScroll(int /*amt*/) {}
+	virtual void onCursorChanged(const CursorState& state) {}
+	virtual void onScroll(int amt) {}
 };
-
-#endif // ES_CORE_COMPONENTS_ILIST_H

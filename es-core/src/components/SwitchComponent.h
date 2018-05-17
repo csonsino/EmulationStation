@@ -1,9 +1,7 @@
 #pragma once
-#ifndef ES_CORE_COMPONENTS_SWITCH_COMPONENT_H
-#define ES_CORE_COMPONENTS_SWITCH_COMPONENT_H
 
-#include "components/ImageComponent.h"
 #include "GuiComponent.h"
+#include "components/ImageComponent.h"
 
 // A very simple "on/off" switch.
 // Should hopefully be switched to use images instead of text in the future.
@@ -13,7 +11,7 @@ public:
 	SwitchComponent(Window* window, bool state = false);
 
 	bool input(InputConfig* config, Input input) override;
-	void render(const Transform4x4f& parentTrans) override;
+	void render(const Eigen::Affine3f& parentTrans) override;
 	void onSizeChanged() override;
 
 	bool getState() const;
@@ -29,5 +27,3 @@ private:
 	ImageComponent mImage;
 	bool mState;
 };
-
-#endif // ES_CORE_COMPONENTS_SWITCH_COMPONENT_H

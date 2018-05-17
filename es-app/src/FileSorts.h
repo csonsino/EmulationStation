@@ -1,9 +1,8 @@
 #pragma once
-#ifndef ES_APP_FILE_SORTS_H
-#define ES_APP_FILE_SORTS_H
 
-#include "FileData.h"
 #include <vector>
+#include "FileData.h"
+#include "SystemData.h"
 
 namespace FileSorts
 {
@@ -20,5 +19,3 @@ namespace FileSorts
 
 	extern const std::vector<FileData::SortType> SortTypes;
 };
-
-#endif // ES_APP_FILE_SORTS_H

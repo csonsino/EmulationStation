@@ -1,10 +1,8 @@
 #pragma once
-#ifndef ES_CORE_HTTP_REQ_H
-#define ES_CORE_HTTP_REQ_H
 
 #include <curl/curl.h>
-#include <map>
 #include <sstream>
+#include <map>
 
 /* Usage:
  * HttpReq myRequest("www.google.com", "/index.html");
@@ -35,7 +33,7 @@ public:
 		REQ_IN_PROGRESS,		//request is in progress
 		REQ_SUCCESS,			//request completed successfully, get it with getContent()
 
-		REQ_IO_ERROR,			//some error happened, get it with getErrorMsg()
+		REQ_IO_ERROR,			//some boost::asio error happened, get it with getErrorMsg()
 		REQ_BAD_STATUS_CODE,	//some invalid HTTP response status code happened (non-200)
 		REQ_INVALID_RESPONSE	//the HTTP response was invalid
 	};
@@ -68,5 +66,3 @@ private:
 	std::stringstream mContent;
 	std::string mErrorMsg;
 };
-
-#endif // ES_CORE_HTTP_REQ_H

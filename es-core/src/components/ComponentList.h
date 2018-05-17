@@ -1,8 +1,7 @@
 #pragma once
-#ifndef ES_CORE_COMPONENTS_COMPONENT_LIST_H
-#define ES_CORE_COMPONENTS_COMPONENT_LIST_H
 
 #include "IList.h"
+#include <functional>
 
 struct ComponentListElement
 {
@@ -53,7 +52,7 @@ public:
 	void textInput(const char* text) override;
 	bool input(InputConfig* config, Input input) override;
 	void update(int deltaTime) override;
-	void render(const Transform4x4f& parentTrans) override;
+	void render(const Eigen::Affine3f& parentTrans) override;
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
 
 	void onSizeChanged() override;
@@ -86,5 +85,3 @@ private:
 
 	std::function<void(CursorState state)> mCursorChangedCallback;
 };
-
-#endif // ES_CORE_COMPONENTS_COMPONENT_LIST_H

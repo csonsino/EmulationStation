@@ -1,8 +1,9 @@
 #include "guis/GuiGamelistFilter.h"
+#include "guis/GuiMsgBox.h"
+#include "views/ViewController.h"
 
+#include "components/TextComponent.h"
 #include "components/OptionListComponent.h"
-#include "views/UIModeController.h"
-#include "SystemData.h"
 
 GuiGamelistFilter::GuiGamelistFilter(Window* window, SystemData* system) : GuiComponent(window), mMenu(window, "FILTER GAMELIST BY"), mSystem(system)
 {
@@ -35,8 +36,8 @@ void GuiGamelistFilter::initializeMenu()
 
 void GuiGamelistFilter::resetAllFilters()
 {
-	mFilterIndex->resetFilters();
-	for (std::map<FilterIndexType, std::shared_ptr< OptionListComponent<std::string> >>::const_iterator it = mFilterOptions.cbegin(); it != mFilterOptions.cend(); ++it ) {
+	mFilterIndex->clearAllFilters();
+	for (std::map<FilterIndexType, std::shared_ptr< OptionListComponent<std::string> >>::iterator it = mFilterOptions.begin(); it != mFilterOptions.end(); ++it ) {
 		std::shared_ptr< OptionListComponent<std::string> > optionList = it->second;
 		optionList->selectNone();
 	}
@@ -50,17 +51,11 @@ GuiGamelistFilter::~GuiGamelistFilter()
 void GuiGamelistFilter::addFiltersToMenu()
 {
 	std::vector<FilterDataDecl> decls = mFilterIndex->getFilterDataDecls();
-	
-	int skip = 0;
-	if (!UIModeController::getInstance()->isUIModeFull())
-		skip = 1;
-	if (UIModeController::getInstance()->isUIModeKid())
-		skip = 2;
-
-	for (std::vector<FilterDataDecl>::const_iterator it = decls.cbegin(); it != decls.cend()-skip; ++it ) {
+	for (std::vector<FilterDataDecl>::iterator it = decls.begin(); it != decls.end(); ++it ) {
 
 		FilterIndexType type = (*it).type; // type of filter
 		std::map<std::string, int>* allKeys = (*it).allIndexKeys; // all possible filters for this type
+		std::vector<std::string>* allFilteredKeys = (*it).currentFilteredKeys; // current keys being filtered for
 		std::string menuLabel = (*it).menuLabel; // text to show in menu
 		std::shared_ptr< OptionListComponent<std::string> > optionList;
 
@@ -84,7 +79,7 @@ void GuiGamelistFilter::addFiltersToMenu()
 void GuiGamelistFilter::applyFilters()
 {
 	std::vector<FilterDataDecl> decls = mFilterIndex->getFilterDataDecls();
-	for (std::map<FilterIndexType, std::shared_ptr< OptionListComponent<std::string> >>::const_iterator it = mFilterOptions.cbegin(); it != mFilterOptions.cend(); ++it ) {
+	for (std::map<FilterIndexType, std::shared_ptr< OptionListComponent<std::string> >>::iterator it = mFilterOptions.begin(); it != mFilterOptions.end(); ++it ) {
 		std::shared_ptr< OptionListComponent<std::string> > optionList = it->second;
 		std::vector<std::string> filters = optionList->getSelectedObjects();
 		mFilterIndex->setFilter(it->first, &filters);

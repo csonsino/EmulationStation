@@ -1,7 +1,9 @@
 #ifdef _RPI_
-#pragma once
-#ifndef ES_CORE_COMPONENTS_VIDEO_PLAYER_COMPONENT_H
-#define ES_CORE_COMPONENTS_VIDEO_PLAYER_COMPONENT_H
+#ifndef _VIDEOPLAYERCOMPONENT_H_
+#define _VIDEOPLAYERCOMPONENT_H_
+
+#include "platform.h"
+#include GLHEADER
 
 #include "components/VideoComponent.h"
 
@@ -13,7 +15,7 @@ public:
 	VideoPlayerComponent(Window* window, std::string path);
 	virtual ~VideoPlayerComponent();
 
-	void render(const Transform4x4f& parentTrans) override;
+	void render(const Eigen::Affine3f& parentTrans) override;
 
 	// Resize the video to fit this size. If one axis is zero, scale that axis to maintain aspect ratio.
 	// If both are non-zero, potentially break the aspect ratio.  If both are zero, no resizing.
@@ -37,5 +39,6 @@ private:
 	std::string						subtitlePath;
 };
 
-#endif // ES_CORE_COMPONENTS_VIDEO_PLAYER_COMPONENT_H
-#endif // _RPI_
+#endif
+#endif
+

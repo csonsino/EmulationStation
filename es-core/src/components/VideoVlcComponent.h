@@ -1,14 +1,13 @@
-#pragma once
-#ifndef ES_CORE_COMPONENTS_VIDEO_VLC_COMPONENT_H
-#define ES_CORE_COMPONENTS_VIDEO_VLC_COMPONENT_H
+#ifndef _VIDEOVLCCOMPONENT_H_
+#define _VIDEOVLCCOMPONENT_H_
+
+#include "platform.h"
+#include GLHEADER
 
 #include "VideoComponent.h"
-
-struct SDL_mutex;
-struct SDL_Surface;
-struct libvlc_instance_t;
-struct libvlc_media_t;
-struct libvlc_media_player_t;
+#include <vlc/vlc.h>
+#include <vlc/libvlc_media.h>
+#include "resources/TextureResource.h"
 
 struct VideoContext {
 	SDL_Surface*		surface;
@@ -33,7 +32,7 @@ public:
 	VideoVlcComponent(Window* window, std::string subtitles);
 	virtual ~VideoVlcComponent();
 
-	void render(const Transform4x4f& parentTrans) override;
+	void render(const Eigen::Affine3f& parentTrans) override;
 
 
 	// Resize the video to fit this size. If one axis is zero, scale that axis to maintain aspect ratio.
@@ -69,4 +68,4 @@ private:
 	std::shared_ptr<TextureResource> mTexture;
 };
 
-#endif // ES_CORE_COMPONENTS_VIDEO_VLC_COMPONENT_H
+#endif

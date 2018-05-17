@@ -1,10 +1,8 @@
 #pragma once
-#ifndef ES_CORE_GUIS_GUI_DETECT_DEVICE_H
-#define ES_CORE_GUIS_GUI_DETECT_DEVICE_H
 
-#include "components/ComponentGrid.h"
-#include "components/NinePatchComponent.h"
 #include "GuiComponent.h"
+#include "components/NinePatchComponent.h"
+#include "components/ComponentGrid.h"
 
 class TextComponent;
 
@@ -33,5 +31,3 @@ private:
 
 	std::function<void()> mDoneCallback;
 };
-
-#endif // ES_CORE_GUIS_GUI_DETECT_DEVICE_H

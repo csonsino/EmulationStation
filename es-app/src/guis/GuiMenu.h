@@ -1,9 +1,8 @@
 #pragma once
-#ifndef ES_APP_GUIS_GUI_MENU_H
-#define ES_APP_GUIS_GUI_MENU_H
 
-#include "components/MenuComponent.h"
 #include "GuiComponent.h"
+#include "components/MenuComponent.h"
+#include <functional>
 
 class GuiMenu : public GuiComponent
 {
@@ -30,5 +29,3 @@ private:
 	MenuComponent mMenu;
 	TextComponent mVersion;
 };
-
-#endif // ES_APP_GUIS_GUI_MENU_H

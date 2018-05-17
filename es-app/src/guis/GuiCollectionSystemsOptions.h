@@ -1,13 +1,16 @@
 #pragma once
-#ifndef ES_APP_GUIS_GUI_COLLECTION_SYSTEM_OPTIONS_H
-#define ES_APP_GUIS_GUI_COLLECTION_SYSTEM_OPTIONS_H
 
+#include "GuiComponent.h"
+#include "SystemData.h"
 #include "components/MenuComponent.h"
+#include "CollectionSystemManager.h"
+#include "components/SwitchComponent.h"
+#include "Log.h"
+
 
 template<typename T>
 class OptionListComponent;
-class SwitchComponent;
-class SystemData;
+
 
 class GuiCollectionSystemsOptions : public GuiComponent
 {
@@ -33,5 +36,3 @@ private:
 	MenuComponent mMenu;
 	SystemData* mSystem;
 };
-
-#endif // ES_APP_GUIS_GUI_COLLECTION_SYSTEM_OPTIONS_H

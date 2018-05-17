@@ -1,12 +1,13 @@
-#pragma once
-#ifndef ES_CORE_AUDIO_MANAGER_H
-#define ES_CORE_AUDIO_MANAGER_H
+#ifndef _AUDIOMANAGER_H_
+#define _AUDIOMANAGER_H_
 
-#include <SDL_audio.h>
-#include <memory>
 #include <vector>
+#include <memory>
 
-class Sound;
+#include "SDL_audio.h"
+
+#include "Sound.h"
+
 
 class AudioManager
 {
@@ -33,4 +34,4 @@ public:
 	virtual ~AudioManager();
 };
 
-#endif // ES_CORE_AUDIO_MANAGER_H
+#endif

@@ -1,15 +1,11 @@
 #pragma once
-#ifndef ES_APP_GUIS_GUI_META_DATA_ED_H
-#define ES_APP_GUIS_GUI_META_DATA_ED_H
 
-#include "components/ComponentGrid.h"
-#include "components/NinePatchComponent.h"
-#include "scrapers/Scraper.h"
 #include "GuiComponent.h"
+#include "components/MenuComponent.h"
 #include "MetaData.h"
+#include "scrapers/Scraper.h"
 
-class ComponentList;
-class TextComponent;
+#include <functional>
 
 class GuiMetaDataEd : public GuiComponent
 {
@@ -45,5 +41,3 @@ private:
 	std::function<void()> mSavedCallback;
 	std::function<void()> mDeleteFunc;
 };
-
-#endif // ES_APP_GUIS_GUI_META_DATA_ED_H

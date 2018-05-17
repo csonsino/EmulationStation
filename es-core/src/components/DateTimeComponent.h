@@ -1,11 +1,8 @@
 #pragma once
-#ifndef ES_CORE_COMPONENTS_DATE_TIME_COMPONENT_H
-#define ES_CORE_COMPONENTS_DATE_TIME_COMPONENT_H
 
-#include "utils/TimeUtil.h"
 #include "GuiComponent.h"
-
-class TextCache;
+#include <boost/date_time.hpp>
+#include "resources/Font.h"
 
 // Used to enter or display a specific point in time.
 class DateTimeComponent : public GuiComponent
@@ -25,7 +22,7 @@ public:
 
 	bool input(InputConfig* config, Input input) override;
 	void update(int deltaTime) override;
-	void render(const Transform4x4f& parentTrans) override;
+	void render(const Eigen::Affine3f& parentTrans) override;
 	void onSizeChanged() override;
 
 	// Set how the point in time will be displayed:
@@ -49,8 +46,8 @@ private:
 	
 	void updateTextCache();
 
-	Utils::Time::DateTime mTime;
-	Utils::Time::DateTime mTimeBeforeEdit;
+	boost::posix_time::ptime mTime;
+	boost::posix_time::ptime mTimeBeforeEdit;
 
 	bool mEditing;
 	int mEditIndex;
@@ -59,7 +56,7 @@ private:
 	int mRelativeUpdateAccumulator;
 
 	std::unique_ptr<TextCache> mTextCache;
-	std::vector<Vector4f> mCursorBoxes;
+	std::vector<Eigen::Vector4f> mCursorBoxes;
 
 	unsigned int mColor;
 	std::shared_ptr<Font> mFont;
@@ -67,5 +64,3 @@ private:
 
 	bool mAutoSize;
 };
-
-#endif // ES_CORE_COMPONENTS_DATE_TIME_COMPONENT_H

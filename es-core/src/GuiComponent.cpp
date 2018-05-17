@@ -1,16 +1,13 @@
 #include "GuiComponent.h"
-
-#include "animations/Animation.h"
-#include "animations/AnimationController.h"
+#include "Window.h"
 #include "Log.h"
 #include "Renderer.h"
+#include "animations/AnimationController.h"
 #include "ThemeData.h"
-#include "Window.h"
-#include <algorithm>
 
 GuiComponent::GuiComponent(Window* window) : mWindow(window), mParent(NULL), mOpacity(255),
-	mPosition(Vector3f::Zero()), mOrigin(Vector2f::Zero()), mRotationOrigin(0.5, 0.5),
-	mSize(Vector2f::Zero()), mTransform(Transform4x4f::Identity()), mIsProcessing(false)
+	mPosition(Eigen::Vector3f::Zero()), mOrigin(Eigen::Vector2f::Zero()), mRotationOrigin(0.5, 0.5),
+	mSize(Eigen::Vector2f::Zero()), mTransform(Eigen::Affine3f::Identity()), mIsProcessing(false)
 {
 	for(unsigned char i = 0; i < MAX_ANIMATIONS; i++)
 		mAnimationMap[i] = NULL;
@@ -60,13 +57,13 @@ void GuiComponent::update(int deltaTime)
 	updateChildren(deltaTime);
 }
 
-void GuiComponent::render(const Transform4x4f& parentTrans)
+void GuiComponent::render(const Eigen::Affine3f& parentTrans)
 {
-	Transform4x4f trans = parentTrans * getTransform();
+	Eigen::Affine3f trans = parentTrans * getTransform();
 	renderChildren(trans);
 }
 
-void GuiComponent::renderChildren(const Transform4x4f& transform) const
+void GuiComponent::renderChildren(const Eigen::Affine3f& transform) const
 {
 	for(unsigned int i = 0; i < getChildCount(); i++)
 	{
@@ -74,46 +71,46 @@ void GuiComponent::renderChildren(const Transform4x4f& transform) const
 	}
 }
 
-Vector3f GuiComponent::getPosition() const
+Eigen::Vector3f GuiComponent::getPosition() const
 {
 	return mPosition;
 }
 
 void GuiComponent::setPosition(float x, float y, float z)
 {
-	mPosition = Vector3f(x, y, z);
+	mPosition << x, y, z;
 	onPositionChanged();
 }
 
-Vector2f GuiComponent::getOrigin() const
+Eigen::Vector2f GuiComponent::getOrigin() const
 {
 	return mOrigin;
 }
 
 void GuiComponent::setOrigin(float x, float y)
 {
-	mOrigin = Vector2f(x, y);
+	mOrigin << x, y;
 	onOriginChanged();
 }
 
-Vector2f GuiComponent::getRotationOrigin() const
+Eigen::Vector2f GuiComponent::getRotationOrigin() const
 {
 	return mRotationOrigin;
 }
 
 void GuiComponent::setRotationOrigin(float x, float y)
 {
-	mRotationOrigin = Vector2f(x, y);
+	mRotationOrigin << x, y;;
 }
 
-Vector2f GuiComponent::getSize() const
+Eigen::Vector2f GuiComponent::getSize() const
 {
 	return mSize;
 }
 
 void GuiComponent::setSize(float w, float h)
 {
-	mSize = Vector2f(w, h);
+	mSize << w, h;
     onSizeChanged();
 }
 
@@ -157,10 +154,10 @@ void GuiComponent::setDefaultZIndex(float z)
 	mDefaultZIndex = z;
 }
 
-Vector2f GuiComponent::getCenter() const
+Eigen::Vector2f GuiComponent::getCenter() const
 {
-	return Vector2f(mPosition.x() - (getSize().x() * mOrigin.x()) + getSize().x() / 2,
-	                mPosition.y() - (getSize().y() * mOrigin.y()) + getSize().y() / 2);
+	return Eigen::Vector2f(mPosition.x() - (getSize().x() * mOrigin.x()) + getSize().x() / 2,
+						   mPosition.y() - (getSize().y() * mOrigin.y()) + getSize().y() / 2);
 }
 
 //Children stuff.
@@ -186,7 +183,7 @@ void GuiComponent::removeChild(GuiComponent* cmp)
 
 	cmp->setParent(NULL);
 
-	for(auto i = mChildren.cbegin(); i != mChildren.cend(); i++)
+	for(auto i = mChildren.begin(); i != mChildren.end(); i++)
 	{
 		if(*i == cmp)
 		{
@@ -203,14 +200,14 @@ void GuiComponent::clearChildren()
 
 void GuiComponent::sortChildren()
 {
-	std::stable_sort(mChildren.begin(), mChildren.end(),  [](GuiComponent* a, GuiComponent* b) {
+	std:stable_sort(mChildren.begin(), mChildren.end(),  [](GuiComponent* a, GuiComponent* b) {
 		return b->getZIndex() > a->getZIndex();
 	});
 }
 
 unsigned int GuiComponent::getChildCount() const
 {
-	return (int)mChildren.size();
+	return mChildren.size();
 }
 
 GuiComponent* GuiComponent::getChild(unsigned int i) const
@@ -236,43 +233,42 @@ unsigned char GuiComponent::getOpacity() const
 void GuiComponent::setOpacity(unsigned char opacity)
 {
 	mOpacity = opacity;
-	for(auto it = mChildren.cbegin(); it != mChildren.cend(); it++)
+	for(auto it = mChildren.begin(); it != mChildren.end(); it++)
 	{
 		(*it)->setOpacity(opacity);
 	}
 }
 
-const Transform4x4f& GuiComponent::getTransform()
+const Eigen::Affine3f& GuiComponent::getTransform()
 {
-	mTransform = Transform4x4f::Identity();
+	mTransform.setIdentity();
 	mTransform.translate(mPosition);
 	if (mScale != 1.0)
 	{
-		mTransform.scale(mScale);
+		mTransform *= Eigen::Scaling(mScale);
 	}
 	if (mRotation != 0.0)
 	{
 		// Calculate offset as difference between origin and rotation origin
-		Vector2f rotationSize = getRotationSize();
-		float xOff = (mOrigin.x() - mRotationOrigin.x()) * rotationSize.x();
-		float yOff = (mOrigin.y() - mRotationOrigin.y()) * rotationSize.y();
+		float xOff = (mOrigin.x() - mRotationOrigin.x()) * mSize.x();
+		float yOff = (mOrigin.y() - mRotationOrigin.y()) * mSize.y();
 
 		// transform to offset point
 		if (xOff != 0.0 || yOff != 0.0)
-			mTransform.translate(Vector3f(xOff * -1, yOff * -1, 0.0f));
+			mTransform.translate(Eigen::Vector3f(xOff * -1, yOff * -1, 0.0f));
 
-		// apply rotation transform
-		mTransform.rotateZ(mRotation);
+		// apply rotation transorm
+		mTransform *= Eigen::AngleAxisf(mRotation, Eigen::Vector3f::UnitZ());
 
 		// Tranform back to original point
 		if (xOff != 0.0 || yOff != 0.0)
-			mTransform.translate(Vector3f(xOff, yOff, 0.0f));
+			mTransform.translate(Eigen::Vector3f(xOff, yOff, 0.0f));
 	}
-	mTransform.translate(Vector3f(mOrigin.x() * mSize.x() * -1, mOrigin.y() * mSize.y() * -1, 0.0f));
+	mTransform.translate(Eigen::Vector3f(mOrigin.x() * mSize.x() * -1, mOrigin.y() * mSize.y() * -1, 0.0f));
 	return mTransform;
 }
 
-void GuiComponent::setValue(const std::string& /*value*/)
+void GuiComponent::setValue(const std::string& value)
 {
 }
 
@@ -283,7 +279,7 @@ std::string GuiComponent::getValue() const
 
 void GuiComponent::textInput(const char* text)
 {
-	for(auto iter = mChildren.cbegin(); iter != mChildren.cend(); iter++)
+	for(auto iter = mChildren.begin(); iter != mChildren.end(); iter++)
 	{
 		(*iter)->textInput(text);
 	}
@@ -393,7 +389,7 @@ int GuiComponent::getAnimationTime(unsigned char slot) const
 
 void GuiComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const std::string& view, const std::string& element, unsigned int properties)
 {
-	Vector2f scale = getParent() ? getParent()->getSize() : Vector2f((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
+	Eigen::Vector2f scale = getParent() ? getParent()->getSize() : Eigen::Vector2f((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
 
 	const ThemeData::ThemeElement* elem = theme->getElement(view, element, "");
 	if(!elem)
@@ -402,22 +398,22 @@ void GuiComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const std
 	using namespace ThemeFlags;
 	if(properties & POSITION && elem->has("pos"))
 	{
-		Vector2f denormalized = elem->get<Vector2f>("pos") * scale;
-		setPosition(Vector3f(denormalized.x(), denormalized.y(), 0));
+		Eigen::Vector2f denormalized = elem->get<Eigen::Vector2f>("pos").cwiseProduct(scale);
+		setPosition(Eigen::Vector3f(denormalized.x(), denormalized.y(), 0));
 	}
 
 	if(properties & ThemeFlags::SIZE && elem->has("size"))
-		setSize(elem->get<Vector2f>("size") * scale);
+		setSize(elem->get<Eigen::Vector2f>("size").cwiseProduct(scale));
 
 	// position + size also implies origin
 	if((properties & ORIGIN || (properties & POSITION && properties & ThemeFlags::SIZE)) && elem->has("origin"))
-		setOrigin(elem->get<Vector2f>("origin"));
+		setOrigin(elem->get<Eigen::Vector2f>("origin"));
 
 	if(properties & ThemeFlags::ROTATION) {
 		if(elem->has("rotation"))
 			setRotationDegrees(elem->get<float>("rotation"));
 		if(elem->has("rotationOrigin"))
-			setRotationOrigin(elem->get<Vector2f>("rotationOrigin"));
+			setRotationOrigin(elem->get<Eigen::Vector2f>("rotationOrigin"));
 	}
 
 	if(properties & ThemeFlags::Z_INDEX && elem->has("zIndex"))

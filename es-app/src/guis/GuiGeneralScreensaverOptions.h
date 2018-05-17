@@ -1,7 +1,7 @@
-#pragma once
-#ifndef ES_APP_GUIS_GUI_GENERAL_SCREENSAVER_OPTIONS_H
-#define ES_APP_GUIS_GUI_GENERAL_SCREENSAVER_OPTIONS_H
+#ifndef _GUI_GENERAL_SCREENSAVER_OPTIONS_H_
+#define _GUI_GENERAL_SCREENSAVER_OPTIONS_H_
 
+#include "components/MenuComponent.h"
 #include "GuiScreensaverOptions.h"
 
 class GuiGeneralScreensaverOptions : public GuiScreensaverOptions
@@ -15,4 +15,4 @@ private:
 	void openSlideshowScreensaverOptions();
 };
 
-#endif // ES_APP_GUIS_GUI_GENERAL_SCREENSAVER_OPTIONS_H
+#endif // _GUI_GENERAL_SCREENSAVER_OPTIONS_H_

@@ -1,13 +1,13 @@
-#pragma once
-#ifndef ES_CORE_INPUT_MANAGER_H
-#define ES_CORE_INPUT_MANAGER_H
+#ifndef _INPUTMANAGER_H_
+#define _INPUTMANAGER_H_
 
-#include <SDL_joystick.h>
+#include <SDL.h>
+#include <vector>
 #include <map>
+#include <string>
 
 class InputConfig;
 class Window;
-union SDL_Event;
 
 //you should only ever instantiate one of these, by the way
 class InputManager
@@ -24,7 +24,6 @@ private:
 	std::map<SDL_JoystickID, SDL_Joystick*> mJoysticks;
 	std::map<SDL_JoystickID, InputConfig*> mInputConfigs;
 	InputConfig* mKeyboardInputConfig;
-	InputConfig* mCECInputConfig;
 
 	std::map<SDL_JoystickID, int*> mPrevAxisValues;
 
@@ -58,4 +57,4 @@ public:
 	bool parseEvent(const SDL_Event& ev, Window* window);
 };
 
-#endif // ES_CORE_INPUT_MANAGER_H
+#endif

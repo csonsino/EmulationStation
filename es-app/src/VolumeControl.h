@@ -1,8 +1,7 @@
 #pragma once
-#ifndef ES_APP_VOLUME_CONTROL_H
-#define ES_APP_VOLUME_CONTROL_H
 
 #include <memory>
+#include <stdint.h>
 
 #if defined (__APPLE__)
     #error TODO: Not implemented for MacOS yet!!!
@@ -12,8 +11,9 @@
 	#include <alsa/asoundlib.h>
 #elif defined(WIN32) || defined(_WIN32)
 	#include <Windows.h>
+	#include <MMSystem.h>
+	#include <mmdeviceapi.h>
 	#include <endpointvolume.h>
-	#include <mmeapi.h>
 #endif
 
 /*!
@@ -56,5 +56,3 @@ public:
 
 	~VolumeControl();
 };
-
-#endif // ES_APP_VOLUME_CONTROL_H

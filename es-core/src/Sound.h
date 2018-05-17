@@ -1,10 +1,10 @@
-#pragma once
-#ifndef ES_CORE_SOUND_H
-#define ES_CORE_SOUND_H
+#ifndef _SOUND_H_
+#define _SOUND_H_
 
-#include "SDL_audio.h"
+#include <string>
 #include <map>
 #include <memory>
+#include "SDL_audio.h"
 
 class ThemeData;
 
@@ -43,4 +43,4 @@ private:
 	static std::map< std::string, std::shared_ptr<Sound> > sMap;
 };
 
-#endif // ES_CORE_SOUND_H
+#endif

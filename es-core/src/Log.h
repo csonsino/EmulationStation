@@ -1,12 +1,13 @@
-#pragma once
-#ifndef ES_CORE_LOG_H
-#define ES_CORE_LOG_H
-
-#include <sstream>
+#ifndef _LOG_H_
+#define _LOG_H_
 
 #define LOG(level) \
 if(level > Log::getReportingLevel()) ; \
 else Log().get(level)
+
+#include <string>
+#include <sstream>
+#include <iostream>
 
 enum LogLevel { LogError, LogWarning, LogInfo, LogDebug };
 
@@ -35,4 +36,4 @@ private:
 	LogLevel messageLevel;
 };
 
-#endif // ES_CORE_LOG_H
+#endif

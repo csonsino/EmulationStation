@@ -1,6 +1,5 @@
 #include "guis/GuiFastSelect.h"
-
-#include "views/gamelist/IGameListView.h"
+#include "ThemeData.h"
 #include "FileSorts.h"
 #include "SystemData.h"
 
@@ -80,7 +79,7 @@ bool GuiFastSelect::input(InputConfig* config, Input input)
 	{
 		mSortId--;
 		if(mSortId < 0)
-			mSortId += (int)FileSorts::SortTypes.size();
+			mSortId += FileSorts::SortTypes.size();
 
 		updateSortText();
 		return true;
@@ -116,7 +115,7 @@ void GuiFastSelect::scroll()
 	mLetterId += mScrollDir;
 	if(mLetterId < 0)
 		mLetterId += LETTERS.length();
-	else if(mLetterId >= LETTERS.length())
+	else if(mLetterId >= (int)LETTERS.length())
 		mLetterId -= LETTERS.length();
 
 	mLetterText.setText(LETTERS.substr(mLetterId, 1));

@@ -1,11 +1,11 @@
 #pragma once
-#ifndef ES_APP_GUIS_GUI_SCRAPER_MULTI_H
-#define ES_APP_GUIS_GUI_SCRAPER_MULTI_H
 
-#include "components/ComponentGrid.h"
-#include "components/NinePatchComponent.h"
-#include "scrapers/Scraper.h"
 #include "GuiComponent.h"
+#include "components/NinePatchComponent.h"
+#include "components/ComponentGrid.h"
+#include "scrapers/Scraper.h"
+
+#include <queue>
 
 class ScraperSearchComponent;
 class TextComponent;
@@ -41,5 +41,3 @@ private:
 	std::shared_ptr<ScraperSearchComponent> mSearchComp;
 	std::shared_ptr<ComponentGrid> mButtonGrid;
 };
-
-#endif // ES_APP_GUIS_GUI_SCRAPER_MULTI_H

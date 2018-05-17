@@ -1,22 +1,20 @@
 #pragma once
-#ifndef ES_APP_VIEWS_SYSTEM_VIEW_H
-#define ES_APP_VIEWS_SYSTEM_VIEW_H
 
-#include "components/IList.h"
-#include "components/TextComponent.h"
-#include "resources/Font.h"
 #include "GuiComponent.h"
-#include <memory>
+#include "components/ImageComponent.h"
+#include "components/TextComponent.h"
+#include "components/ScrollableContainer.h"
+#include "components/IList.h"
+#include "resources/TextureResource.h"
 
-class AnimatedImageComponent;
 class SystemData;
+class AnimatedImageComponent;
 
 enum CarouselType : unsigned int
 {
 	HORIZONTAL = 0,
 	VERTICAL = 1,
-	VERTICAL_WHEEL = 2,
-	HORIZONTAL_WHEEL = 3
+	VERTICAL_WHEEL = 2
 };
 
 struct SystemViewData
@@ -28,16 +26,16 @@ struct SystemViewData
 struct SystemViewCarousel
 {
 	CarouselType type;
-	Vector2f pos;
-	Vector2f size;
-	Vector2f origin;
+	Eigen::Vector2f pos;
+	Eigen::Vector2f size;
+	Eigen::Vector2f origin;
 	float logoScale;
 	float logoRotation;
-	Vector2f logoRotationOrigin;
+	Eigen::Vector2f logoRotationOrigin;
 	Alignment logoAlignment;
 	unsigned int color;
 	int maxLogoCount; // number of logos shown on the carousel
-	Vector2f logoSize;
+	Eigen::Vector2f logoSize;
 	float zIndex;
 };
 
@@ -53,7 +51,7 @@ public:
 
 	bool input(InputConfig* config, Input input) override;
 	void update(int deltaTime) override;
-	void render(const Transform4x4f& parentTrans) override;
+	void render(const Eigen::Affine3f& parentTrans) override;
 
 	void onThemeChanged(const std::shared_ptr<ThemeData>& theme);
 
@@ -69,10 +67,10 @@ private:
 	void getDefaultElements(void);
 	void getCarouselFromTheme(const ThemeData::ThemeElement* elem);
 
-	void renderCarousel(const Transform4x4f& parentTrans);
-	void renderExtras(const Transform4x4f& parentTrans, float lower, float upper);
-	void renderInfoBar(const Transform4x4f& trans);
-	void renderFade(const Transform4x4f& trans);
+	void renderCarousel(const Eigen::Affine3f& parentTrans);
+	void renderExtras(const Eigen::Affine3f& parentTrans, float lower, float upper);
+	void renderInfoBar(const Eigen::Affine3f& trans);
+	void renderFade(const Eigen::Affine3f& trans);
 
 
 	SystemViewCarousel mCarousel;
@@ -86,5 +84,3 @@ private:
 	bool mViewNeedsReload;
 	bool mShowing;
 };
-
-#endif // ES_APP_VIEWS_SYSTEM_VIEW_H

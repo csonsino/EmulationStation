@@ -1,26 +1,28 @@
 #include "components/ScraperSearchComponent.h"
 
-#include "components/ComponentList.h"
-#include "components/DateTimeComponent.h"
+#include "guis/GuiMsgBox.h"
+#include "components/TextComponent.h"
+#include "components/ScrollableContainer.h"
 #include "components/ImageComponent.h"
 #include "components/RatingComponent.h"
-#include "components/ScrollableContainer.h"
-#include "components/TextComponent.h"
-#include "guis/GuiMsgBox.h"
-#include "guis/GuiTextEditPopup.h"
-#include "resources/Font.h"
-#include "utils/StringUtil.h"
-#include "FileData.h"
+#include "components/DateTimeComponent.h"
+#include "components/AnimatedImageComponent.h"
+#include "components/ComponentList.h"
+#include "HttpReq.h"
+#include "Settings.h"
 #include "Log.h"
-#include "Window.h"
+#include "Util.h"
+#include "guis/GuiTextEditPopup.h"
 
 ScraperSearchComponent::ScraperSearchComponent(Window* window, SearchType type) : GuiComponent(window),
-	mGrid(window, Vector2i(4, 3)), mBusyAnim(window), 
+	mGrid(window, Eigen::Vector2i(4, 3)), mBusyAnim(window), 
 	mSearchType(type)
 {
 	addChild(&mGrid);
 
 	mBlockAccept = false;
+
+	using namespace Eigen;
 
 	// left spacer (empty component, needed for borders)
 	mGrid.setEntry(std::make_shared<GuiComponent>(mWindow), Vector2i(0, 0), false, false, Vector2i(1, 3), GridFlags::BORDER_TOP | GridFlags::BORDER_BOTTOM);
@@ -57,9 +59,9 @@ ScraperSearchComponent::ScraperSearchComponent(Window* window, SearchType type) 
 	mMD_Pairs.push_back(MetaDataPair(std::make_shared<TextComponent>(mWindow, "GENRE:", font, mdLblColor), mMD_Genre));
 	mMD_Pairs.push_back(MetaDataPair(std::make_shared<TextComponent>(mWindow, "PLAYERS:", font, mdLblColor), mMD_Players));
 
-	mMD_Grid = std::make_shared<ComponentGrid>(mWindow, Vector2i(2, (int)mMD_Pairs.size()*2 - 1));
+	mMD_Grid = std::make_shared<ComponentGrid>(mWindow, Vector2i(2, mMD_Pairs.size()*2 - 1));
 	unsigned int i = 0;
-	for(auto it = mMD_Pairs.cbegin(); it != mMD_Pairs.cend(); it++)
+	for(auto it = mMD_Pairs.begin(); it != mMD_Pairs.end(); it++)
 	{
 		mMD_Grid->setEntry(it->first, Vector2i(0, i), false, true);
 		mMD_Grid->setEntry(it->second, Vector2i(1, i), false, it->resize);
@@ -136,7 +138,7 @@ void ScraperSearchComponent::resizeMetadata()
 
 		// update label fonts
 		float maxLblWidth = 0;
-		for(auto it = mMD_Pairs.cbegin(); it != mMD_Pairs.cend(); it++)
+		for(auto it = mMD_Pairs.begin(); it != mMD_Pairs.end(); it++)
 		{
 			it->first->setFont(fontLbl);
 			it->first->setSize(0, 0);
@@ -169,6 +171,8 @@ void ScraperSearchComponent::resizeMetadata()
 
 void ScraperSearchComponent::updateViewStyle()
 {
+	using namespace Eigen;
+
 	// unlink description and result list and result name
 	mGrid.removeEntry(mResultName);
 	mGrid.removeEntry(mResultDesc);
@@ -227,9 +231,11 @@ void ScraperSearchComponent::onSearchDone(const std::vector<ScraperSearchResult>
 
 	mScraperResults = results;
 
+	const int end = results.size() > MAX_SCRAPER_RESULTS ? MAX_SCRAPER_RESULTS : results.size(); // at max display 5
+
 	auto font = Font::get(FONT_SIZE_MEDIUM);
 	unsigned int color = 0x777777FF;
-	if(results.empty())
+	if(end == 0)
 	{
 		ComponentListRow row;
 		row.addElement(std::make_shared<TextComponent>(mWindow, "NO GAMES FOUND - SKIP", font, color), true);
@@ -241,10 +247,10 @@ void ScraperSearchComponent::onSearchDone(const std::vector<ScraperSearchResult>
 		mGrid.resetCursor();
 	}else{
 		ComponentListRow row;
-		for(size_t i = 0; i < results.size(); i++)
+		for(int i = 0; i < end; i++)
 		{
 			row.elements.clear();
-			row.addElement(std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(results.at(i).mdl.get("name")), font, color), true);
+			row.addElement(std::make_shared<TextComponent>(mWindow, strToUpper(results.at(i).mdl.get("name")), font, color), true);
 			row.makeAcceptInputHandler([this, i] { returnResult(mScraperResults.at(i)); });
 			mResultList->addRow(row);
 		}
@@ -269,7 +275,7 @@ void ScraperSearchComponent::onSearchDone(const std::vector<ScraperSearchResult>
 void ScraperSearchComponent::onSearchError(const std::string& error)
 {
 	LOG(LogInfo) << "ScraperSearchComponent search error: " << error;
-	mWindow->pushGui(new GuiMsgBox(mWindow, Utils::String::toUpper(error),
+	mWindow->pushGui(new GuiMsgBox(mWindow, strToUpper(error),
 		"RETRY", std::bind(&ScraperSearchComponent::search, this, mLastSearch),
 		"SKIP", mSkipCallback,
 		"CANCEL", mCancelCallback));
@@ -294,8 +300,8 @@ void ScraperSearchComponent::updateInfoPane()
 	if(i != -1 && (int)mScraperResults.size() > i)
 	{
 		ScraperSearchResult& res = mScraperResults.at(i);
-		mResultName->setText(Utils::String::toUpper(res.mdl.get("name")));
-		mResultDesc->setText(Utils::String::toUpper(res.mdl.get("desc")));
+		mResultName->setText(strToUpper(res.mdl.get("name")));
+		mResultDesc->setText(strToUpper(res.mdl.get("desc")));
 		mDescContainer->reset();
 
 		mResultThumbnail->setImage("");
@@ -308,12 +314,12 @@ void ScraperSearchComponent::updateInfoPane()
 		}
 
 		// metadata
-		mMD_Rating->setValue(Utils::String::toUpper(res.mdl.get("rating")));
-		mMD_ReleaseDate->setValue(Utils::String::toUpper(res.mdl.get("releasedate")));
-		mMD_Developer->setText(Utils::String::toUpper(res.mdl.get("developer")));
-		mMD_Publisher->setText(Utils::String::toUpper(res.mdl.get("publisher")));
-		mMD_Genre->setText(Utils::String::toUpper(res.mdl.get("genre")));
-		mMD_Players->setText(Utils::String::toUpper(res.mdl.get("players")));
+		mMD_Rating->setValue(strToUpper(res.mdl.get("rating")));
+		mMD_ReleaseDate->setValue(strToUpper(res.mdl.get("releasedate")));
+		mMD_Developer->setText(strToUpper(res.mdl.get("developer")));
+		mMD_Publisher->setText(strToUpper(res.mdl.get("publisher")));
+		mMD_Genre->setText(strToUpper(res.mdl.get("genre")));
+		mMD_Players->setText(strToUpper(res.mdl.get("players")));
 		mGrid.onSizeChanged();
 	}else{
 		mResultName->setText("");
@@ -341,9 +347,9 @@ bool ScraperSearchComponent::input(InputConfig* config, Input input)
 	return GuiComponent::input(config, input);
 }
 
-void ScraperSearchComponent::render(const Transform4x4f& parentTrans)
+void ScraperSearchComponent::render(const Eigen::Affine3f& parentTrans)
 {
-	Transform4x4f trans = parentTrans * getTransform();
+	Eigen::Affine3f trans = parentTrans * getTransform();
 
 	renderChildren(trans);
 
